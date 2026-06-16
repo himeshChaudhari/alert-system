@@ -1,4 +1,4 @@
 .env
 .env.local
 .env.development.local
-__pycache__
+__pycache__/
