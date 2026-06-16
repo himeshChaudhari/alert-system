@@ -29,7 +29,8 @@ mysql = MySQL(app)
 
 # Email Settings (Modify these for real SMTP servers like Gmail, Mailtrap, etc.)
 SMTP_HOST = os.environ.get('SMTP_HOST')
-SMTP_PORT = int(os.environ.get('SMTP_PORT'))
+SMTP_PORT_VAL = os.environ.get('SMTP_PORT')
+SMTP_PORT = int(SMTP_PORT_VAL) if SMTP_PORT_VAL else 587
 SMTP_USER = os.environ.get('SMTP_USER')
 SMTP_PASS = os.environ.get('SMTP_PASS')
 SMTP_SENDER = os.environ.get('SMTP_SENDER')
