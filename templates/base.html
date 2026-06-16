@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Retail Expiry Tracker{% endblock %}</title>
+    <!-- Premium Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <header>
+        <div class="navbar">
+            <a href="/" class="nav-brand">
+                <span><i class="fa-solid fa-qrcode"></i></span> ExpiryAlert
+            </a>
+            
+            <nav class="nav-links">
+                {% if 'user_id' in session %}
+                    <!-- Role-Specific Navigation Links -->
+                    {% if session['user_role'] == 'admin' %}
+                        <a href="{{ url_for('admin_dashboard') }}" class="nav-link {% if request.path == '/admin/dashboard' %}active{% endif %}">
+                            <i class="fa-solid fa-chart-line"></i> Analytics
+                        </a>
+                        <a href="{{ url_for('staff_dashboard') }}" class="nav-link {% if request.path == '/staff/dashboard' %}active{% endif %}">
+                            <i class="fa-solid fa-boxes-stacked"></i> Products
+                        </a>
+                        <a href="{{ url_for('staff_billing') }}" class="nav-link {% if request.path == '/staff/billing' %}active{% endif %}">
+                            <i class="fa-solid fa-cash-register"></i> Billing
+                        </a>
+                        <a href="{{ url_for('billing_history') }}" class="nav-link {% if request.path == '/staff/billing-history' %}active{% endif %}">
+                            <i class="fa-solid fa-clock-rotate-left"></i> History
+                        </a>
+                    {% elif session['user_role'] == 'staff' %}
+                        <a href="{{ url_for('staff_dashboard') }}" class="nav-link {% if request.path == '/staff/dashboard' %}active{% endif %}">
+                            <i class="fa-solid fa-boxes-stacked"></i> Product Registry
+                        </a>
+                        <a href="{{ url_for('staff_billing') }}" class="nav-link {% if request.path == '/staff/billing' %}active{% endif %}">
+                            <i class="fa-solid fa-cash-register"></i> Billing Counter
+                        </a>
+                        <a href="{{ url_for('billing_history') }}" class="nav-link {% if request.path == '/staff/billing-history' %}active{% endif %}">
+                            <i class="fa-solid fa-clock-rotate-left"></i> History
+                        </a>
+                    {% elif session['user_role'] == 'customer' %}
+                        <a href="{{ url_for('customer_dashboard') }}" class="nav-link {% if request.path == '/customer/dashboard' %}active{% endif %}">
+                            <i class="fa-solid fa-timeline"></i> My Expiry Timeline
+                        </a>
+                    {% endif %}
+                    
+                    <!-- User Account Dropdown/Badge -->
+                    <span class="user-badge">
+                        <i class="fa-solid fa-circle-user"></i>
+                        {{ session['user_name'] }} ({{ session['user_role'] }})
+                    </span>
+                    
+                    <a href="{{ url_for('logout') }}" class="btn btn-secondary" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;">
+                        <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+                    </a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="nav-link {% if request.path == '/login' %}active{% endif %}">Login</a>
+                    <a href="{{ url_for('register') }}" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.9rem;">Register</a>
+                {% endif %}
+            </nav>
+        </div>
+    </header>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="flash-messages">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}">
+                        <span>{{ message }}</span>
+                        <span class="alert-close" onclick="this.parentElement.style.display='none';">&times;</span>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content Container -->
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2026 QR-Based Retail Expiry Tracking & Consumer Alert System. All rights reserved.</p>
+    </footer>
+
+    {% block scripts %}{% endblock %}
+</body>
+</html>

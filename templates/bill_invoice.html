@@ -1,0 +1,281 @@
+{% extends 'base.html' %}
+
+{% block title %}Invoice #{{ bill.id }} - ExpiryAlert{% endblock %}
+
+{% block content %}
+<!-- Screen-Only Action Buttons -->
+<div class="action-buttons" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+    <a href="{{ url_for('billing_history') }}" class="btn btn-secondary">
+        <i class="fa-solid fa-arrow-left"></i> Back to Billing History
+    </a>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <span style="font-size: 0.8rem; color: var(--text-secondary);">
+            <i class="fa-solid fa-circle-info"></i> Use your browser's Print &gt; Save as PDF option
+        </span>
+        <button type="button" class="btn btn-primary" onclick="window.print()">
+            <i class="fa-solid fa-print"></i> Print Invoice
+        </button>
+    </div>
+</div>
+
+<!-- Invoice Content (Targeted by Print CSS) -->
+<div id="invoice-container" class="card" style="max-width: 800px; margin: 0 auto;">
+
+    <!-- Invoice Header -->
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem;">
+        <div>
+            <h2 style="margin-bottom: 0.25rem; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px;">
+                <i class="fa-solid fa-qrcode" style="color: var(--primary); margin-right: 0.25rem;"></i>
+                ExpiryAlert Smart Retail
+            </h2>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem;">
+                QR-Based Retail Expiry Tracking &amp; Consumer Alert System
+            </p>
+            <p style="color: var(--text-secondary); font-size: 0.8rem;">
+                <i class="fa-solid fa-location-dot"></i> 123 Retail Avenue, Commerce District, Mumbai — 400001
+            </p>
+        </div>
+        <div style="text-align: right;">
+            <span class="badge success" style="font-size: 0.85rem; padding: 0.35rem 0.8rem;">
+                <i class="fa-solid fa-file-invoice"></i> INVOICE
+            </span>
+        </div>
+    </div>
+
+    <!-- Invoice Metadata -->
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+        <!-- Invoice Details -->
+        <div style="background: #FAFAFA; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1.25rem;">
+            <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 0.75rem; font-weight: 600;">
+                Invoice Details
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Invoice #</span>
+                    <span style="font-size: 0.85rem; font-weight: 600; color: var(--primary); font-family: monospace;">{{ bill.id }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Date</span>
+                    <span style="font-size: 0.85rem; font-weight: 500;">{{ bill.bill_date }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Staff</span>
+                    <span style="font-size: 0.85rem; font-weight: 500;">{{ bill.staff_name }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Customer Details -->
+        <div style="background: #FAFAFA; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1.25rem;">
+            <h4 style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-secondary); margin-bottom: 0.75rem; font-weight: 600;">
+                Bill To
+            </h4>
+            <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Name</span>
+                    <span style="font-size: 0.85rem; font-weight: 600;">{{ bill.customer_name }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Phone</span>
+                    <span style="font-size: 0.85rem; font-weight: 500;">{{ bill.customer_phone or 'N/A' }}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="font-size: 0.85rem; color: var(--text-secondary);">Email</span>
+                    <span style="font-size: 0.85rem; font-weight: 500;">{{ bill.customer_email or 'N/A' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Items Table -->
+    <div class="table-wrapper" id="invoice-table">
+        <table>
+            <thead>
+                <tr>
+                    <th style="width: 50px; text-align: center;">#</th>
+                    <th>Product Name</th>
+                    <th style="text-align: center; width: 80px;">Qty</th>
+                    <th style="text-align: right; width: 130px;">Unit Price (₹)</th>
+                    <th style="text-align: right; width: 130px;">Line Total (₹)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td style="text-align: center; color: var(--text-secondary); font-weight: 500;">{{ loop.index }}</td>
+                    <td style="font-weight: 500;">
+                        <div>{{ item.product_name }}</div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); font-weight: normal; margin-top: 0.15rem;">
+                            {{ "%.2f"|format(item.pack_size)|replace(".00", "") }} {{ item.unit|title }} Pack
+                        </div>
+                    </td>
+                    <td style="text-align: center;">
+                        <span class="badge success">{{ item.quantity }}</span>
+                    </td>
+                    <td style="text-align: right; font-family: monospace; font-weight: 500;">₹{{ "%.2f"|format(item.unit_price) }}</td>
+                    <td style="text-align: right; font-family: monospace; font-weight: 600;">₹{{ "%.2f"|format(item.line_total) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" style="text-align: right; font-size: 1.1rem; font-weight: 700; padding-right: 1rem; border-top: 2px solid var(--border-color);">
+                        Grand Total
+                    </td>
+                    <td style="text-align: right; font-family: monospace; font-size: 1.2rem; font-weight: 700; color: var(--success); border-top: 2px solid var(--border-color);">
+                        ₹{{ "%.2f"|format(bill.total_amount) }}
+                    </td>
+                </tr>
+            </tfoot>
+        </table>
+    </div>
+
+    <!-- Thank You Footer -->
+    <div style="text-align: center; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color);">
+        <div style="margin-bottom: 0.75rem;">
+            <i class="fa-solid fa-heart" style="color: var(--danger); font-size: 1.1rem;"></i>
+        </div>
+        <p style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.25rem;">Thank You for Shopping with Us!</p>
+        <p style="font-size: 0.8rem; color: var(--text-secondary);">
+            We appreciate your business. For any queries, please contact our support team.
+        </p>
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.75rem; font-style: italic;">
+            <i class="fa-solid fa-shield-halved"></i> Powered by ExpiryAlert Smart Retail — Ensuring Freshness, Always.
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<style>
+    @media print {
+        /* Hide non-printable screen elements */
+        header,
+        .navbar,
+        footer,
+        .flash-messages,
+        .action-buttons {
+            display: none !important;
+        }
+
+        /* Reset body for clean print */
+        body {
+            background: #ffffff !important;
+            color: #000000 !important;
+            font-family: 'Inter', Arial, sans-serif;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        body::before,
+        body::after {
+            display: none !important;
+        }
+
+        main {
+            padding: 0 !important;
+            margin: 0 !important;
+            max-width: 100% !important;
+            width: 100% !important;
+        }
+
+        /* Invoice container: remove dark theme, full width */
+        #invoice-container {
+            background: #ffffff !important;
+            border: none !important;
+            box-shadow: none !important;
+            backdrop-filter: none !important;
+            -webkit-backdrop-filter: none !important;
+            max-width: 100% !important;
+            padding: 0.5cm !important;
+            margin: 0 !important;
+            border-radius: 0 !important;
+        }
+
+        /* Override all text colors for print */
+        #invoice-container,
+        #invoice-container h2,
+        #invoice-container h4,
+        #invoice-container p,
+        #invoice-container span,
+        #invoice-container td,
+        #invoice-container th,
+        #invoice-container div {
+            color: #000000 !important;
+            -webkit-text-fill-color: #000000 !important;
+        }
+
+        /* Invoice header icon — keep brand color for PDF */
+        #invoice-container h2 i {
+            color: #7BAA2F !important;
+            -webkit-text-fill-color: #7BAA2F !important;
+        }
+
+        /* Metadata boxes */
+        #invoice-container div[style*="#FAFAFA"] {
+            background: #f9fafb !important;
+            border: 1px solid #e5e7eb !important;
+        }
+
+        /* Table styles for print */
+        #invoice-table {
+            border: 1px solid #d1d5db !important;
+            border-radius: 0 !important;
+        }
+
+        #invoice-table table {
+            border-collapse: collapse !important;
+        }
+
+        #invoice-table th {
+            background-color: #f3f4f6 !important;
+            color: #374151 !important;
+            border-bottom: 2px solid #d1d5db !important;
+            padding: 0.6rem 0.8rem !important;
+            font-size: 0.8rem !important;
+        }
+
+        #invoice-table td {
+            border-bottom: 1px solid #e5e7eb !important;
+            padding: 0.6rem 0.8rem !important;
+            font-size: 0.85rem !important;
+        }
+
+        #invoice-table tfoot td {
+            border-top: 2px solid #374151 !important;
+            border-bottom: none !important;
+        }
+
+        /* Grand total color for print */
+        #invoice-table tfoot td:last-child {
+            color: #059669 !important;
+            -webkit-text-fill-color: #059669 !important;
+        }
+
+        /* Badge adjustments */
+        .badge.success {
+            background: #d1fae5 !important;
+            color: #065f46 !important;
+            -webkit-text-fill-color: #065f46 !important;
+            border: 1px solid #6ee7b7 !important;
+        }
+
+        /* Thank you section dashed border */
+        #invoice-container div[style*="border-top: 1px dashed"] {
+            border-top: 1px dashed #d1d5db !important;
+        }
+
+        /* Heart icon keeps color */
+        .fa-heart {
+            color: #ef4444 !important;
+            -webkit-text-fill-color: #ef4444 !important;
+        }
+
+        /* Page settings */
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+    }
+</style>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Register - ExpiryAlert{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-logo">
+        <i class="fa-solid fa-user-plus"></i> Create Account
+    </div>
+    
+    <div class="card">
+        <form method="POST" action="{{ url_for('register') }}">
+            <div class="form-group">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" class="form-control" placeholder="John Doe" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="john@example.com" required autocomplete="username">
+            </div>
+            
+            <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input type="tel" id="phone" name="phone" class="form-control" placeholder="e.g. 9876543210" required>
+                <small style="display: block; margin-top: 0.25rem; font-size: 0.75rem; color: var(--text-secondary);">
+                    <i class="fa-solid fa-circle-info"></i> Did you checkout at our store? Use the same phone number to link your purchase history.
+                </small>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Choose a secure password" required autocomplete="new-password">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.75rem;">
+                <label for="role">Account Role</label>
+                <select id="role" name="role" class="form-control">
+                    <option value="customer" selected>Customer (View Expiry Timelines)</option>
+                    <option value="staff">Retail Store Staff (Register &amp; Scan Products)</option>
+                </select>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Register Account
+            </button>
+        </form>
+    </div>
+    
+    <div class="auth-footer">
+        Already have an account? <a href="{{ url_for('login') }}">Sign in here</a>
+    </div>
+</div>
+{% endblock %}
