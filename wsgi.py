@@ -12,4 +12,5 @@ dotenv_path = os.path.join(project_home, '.env')
 if os.path.exists(dotenv_path):
     load_dotenv(dotenv_path)
 
-from app import app as application
+from app import app
+application = app
