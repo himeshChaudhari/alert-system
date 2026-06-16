@@ -6,3 +6,7 @@ Pillow
 APScheduler
 requests
 python-dotenv
+gunicorn
+Werkzeug
+pymysql
+cryptography
