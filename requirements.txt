@@ -1,0 +1,8 @@
+Flask
+flask-mysqldb
+mysqlclient
+qrcode
+Pillow
+APScheduler
+requests
+python-dotenv

@@ -13,16 +13,17 @@ from email.mime.multipart import MIMEMultipart
 from functools import wraps
 import requests
 from dotenv import load_dotenv
-load_dotenv()
+base_dir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(base_dir, '.env'))
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('secret_key')
 
 # Database Configuration
-app.config['MYSQL_HOST'] = 'localhost'
-app.config['MYSQL_USER'] = 'root'
-app.config['MYSQL_PASSWORD'] =os.environ.get('MYSQL_PASSWORD') 
-app.config['MYSQL_DB'] = 'expiry_system'
+app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
+app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
+app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
+app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'expiry_system')
 app.config['FAST2SMS_API_KEY'] = os.environ.get('FAST2SMS_API_KEY')
 
 mysql = MySQL(app)
@@ -946,11 +947,30 @@ def run_expiry_alerts_check():
 # Setup background scheduler
 scheduler = BackgroundScheduler()
 
-# Start scheduler only in the main reloader thread to avoid dual tasks
+# Start scheduler only in the main reloader thread to avoid dual tasks,
+# and use fcntl file locking to prevent running multiple schedulers in uWSGI/multi-process environments.
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-    scheduler.add_job(func=run_expiry_alerts_check, trigger="interval", days=1)
-    scheduler.start()
-    print("[SCHEDULER] APScheduler started successfully.")
+    lock_file_path = os.path.join(base_dir, 'scheduler.lock')
+    should_start = True
+    try:
+        import fcntl
+        global _scheduler_lock_file
+        _scheduler_lock_file = open(lock_file_path, 'w')
+        fcntl.lockf(_scheduler_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except ImportError:
+        # Windows or non-UNIX environment, bypass file locking
+        print("[SCHEDULER] fcntl module not available. Proceeding without file lock (dev environment).")
+    except (BlockingIOError, PermissionError):
+        # Lock acquired by another process
+        print("[SCHEDULER] Another process holds the scheduler lock. Skipping scheduler startup in this process.")
+        should_start = False
+    except Exception as e:
+        print(f"[SCHEDULER WARNING] Failed to acquire file lock: {e}. Starting scheduler anyway.")
+    
+    if should_start:
+        scheduler.add_job(func=run_expiry_alerts_check, trigger="interval", days=1)
+        scheduler.start()
+        print("[SCHEDULER] APScheduler started successfully.")
 
 if __name__ == '__main__':
     app.run(debug=True)
