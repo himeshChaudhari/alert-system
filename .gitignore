@@ -1,22 +1,4 @@
-
 .env
 .env.local
 .env.development.local
-
-
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
-.Python
-
-# Python virtual environments
-.venv/
-venv/
-ENV/
-env/
-
-# System and logs
-logs/
-*.log
-.DS_Store

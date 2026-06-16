@@ -19,18 +19,17 @@ app = Flask(__name__)
 app.secret_key = os.environ.get('secret_key')
 
 # Database Configuration
-app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
-app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
-app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
-app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'expiry_system')
+app.config['MYSQL_HOST'] = 'localhost'
+app.config['MYSQL_USER'] = 'root'
+app.config['MYSQL_PASSWORD'] =os.environ.get('MYSQL_PASSWORD') 
+app.config['MYSQL_DB'] = 'expiry_system'
 app.config['FAST2SMS_API_KEY'] = os.environ.get('FAST2SMS_API_KEY')
 
 mysql = MySQL(app)
 
 # Email Settings (Modify these for real SMTP servers like Gmail, Mailtrap, etc.)
 SMTP_HOST = os.environ.get('SMTP_HOST')
-SMTP_PORT_VAL = os.environ.get('SMTP_PORT')
-SMTP_PORT = int(SMTP_PORT_VAL) if SMTP_PORT_VAL else 587
+SMTP_PORT = int(os.environ.get('SMTP_PORT'))
 SMTP_USER = os.environ.get('SMTP_USER')
 SMTP_PASS = os.environ.get('SMTP_PASS')
 SMTP_SENDER = os.environ.get('SMTP_SENDER')
