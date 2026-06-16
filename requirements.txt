@@ -1,2 +1,8 @@
 Flask>=3.0.0
 gunicorn>=21.2.0
+qrcode
+apscheduler
+requests
+python-dotenv
+pymysql
+cryptography
