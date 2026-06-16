@@ -114,8 +114,8 @@
                                             <span style="font-weight: 500; font-family: monospace;">{{ product.expiry_date }}</span>
                                         </td>
                                         <td style="text-align: center;">
-                                            <a href="{{ url_for('static', filename='qrcodes/product_' ~ product.id ~ '.png') }}" target="_blank" title="Open QR Code in new window">
-                                                <img src="{{ url_for('static', filename='qrcodes/product_' ~ product.id ~ '.png') }}" 
+                                            <a href="{{ url_for('get_product_qr', product_id=product.id) }}" target="_blank" title="Open QR Code in new window">
+                                                <img src="{{ url_for('get_product_qr', product_id=product.id) }}" 
                                                      alt="QR" 
                                                      style="width: 45px; height: 45px; border: 1.5px solid var(--border-color); border-radius: 4px; vertical-align: middle; transition: transform 0.2s;"
                                                      onmouseover="this.style.transform='scale(2.5)';"
