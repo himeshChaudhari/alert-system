@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - ExpiryAlert{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-logo">
+        <i class="fa-solid fa-lock"></i> Account Login
+    </div>
+    
+    <div class="card">
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="form-group">
+                <label for="email">Email Address</label>
+                <input type="email" id="email" name="email" class="form-control" placeholder="name@retail.com" required autocomplete="email">
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 1.75rem;">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+            </button>
+        </form>
+    </div>
+    
+    <div class="auth-footer">
+        Don't have an account? <a href="{{ url_for('register') }}">Create customer account</a>
+    </div>
+</div>
+{% endblock %}

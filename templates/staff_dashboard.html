@@ -1,0 +1,154 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Dashboard - ExpiryAlert{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1>Product Registry Dashboard</h1>
+    <p class="subtitle">Register new inventory items with pricing and generate tracking QR codes.</p>
+</div>
+
+<div class="grid-2">
+    <!-- Left Panel: Product Registration Form -->
+    <div>
+        <div class="card">
+            <h3 class="card-title">
+                <i class="fa-solid fa-folder-plus" style="color: var(--primary);"></i>
+                Register New Product
+            </h3>
+            <form action="{{ url_for('register_product') }}" method="POST">
+                <div class="form-group">
+                    <label for="name">Product Name</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Fortune Sunflower Oil" required>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="stock_quantity">Stock Quantity (Packs)</label>
+                        <input type="number" id="stock_quantity" name="stock_quantity" class="form-control" placeholder="e.g. 5" min="0" value="0" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="price_per_pack">Price Per Pack (₹)</label>
+                        <input type="number" id="price_per_pack" name="price_per_pack" class="form-control" placeholder="e.g. 110.00" step="0.01" min="0" value="0.00" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="pack_size">Pack Size (Content)</label>
+                        <input type="number" id="pack_size" name="pack_size" class="form-control" placeholder="e.g. 1" step="0.01" min="0.01" value="1.00" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="unit">Unit</label>
+                        <select id="unit" name="unit" class="form-control" required>
+                            <option value="litre">litre</option>
+                            <option value="ml">ml</option>
+                            <option value="kg">kg</option>
+                            <option value="gram">gram</option>
+                            <option value="piece" selected>piece</option>
+                            <option value="packet">packet</option>
+                            <option value="bottle">bottle</option>
+                            <option value="box">box</option>
+                            <option value="dozen">dozen</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 1.75rem;">
+                    <label for="expiry_date">Expiration Date</label>
+                    <input type="date" id="expiry_date" name="expiry_date" class="form-control" required>
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-qrcode"></i> Generate Product QR Code
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Right Panel: List of Registered Products -->
+    <div>
+        <div class="card" style="max-height: 600px; display: flex; flex-direction: column;">
+            <h3 class="card-title" style="margin-bottom: 1rem;">
+                <i class="fa-solid fa-boxes-stacked" style="color: var(--success);"></i>
+                Recent Product Registrations
+            </h3>
+            
+            <div style="overflow-y: auto; flex: 1; padding-right: 0.5rem;">
+                {% if products %}
+                    <div class="table-wrapper" style="border: none; margin-top: 0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product Details</th>
+                                    <th>Price/Pack</th>
+                                    <th>Stock</th>
+                                    <th>Expiry Date</th>
+                                    <th>QR Code</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for product in products %}
+                                    <tr>
+                                        <td><strong>#{{ product.id }}</strong></td>
+                                        <td>
+                                            <div><strong>{{ product.name }}</strong></div>
+                                            <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.15rem;">
+                                                {{ "%.2f"|format(product.pack_size)|replace(".00", "") }} {{ product.unit|title }} Pack
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <span style="font-weight: 600; color: var(--text-primary);">₹{{ "%.2f"|format(product.price_per_pack) }}</span>
+                                        </td>
+                                        <td>
+                                            {% if product.stock_quantity == 0 %}
+                                                <span class="badge danger">Out of stock</span>
+                                            {% else %}
+                                                <span class="badge success">{{ product.stock_quantity }} Pack(s)</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <span style="font-weight: 500; font-family: monospace;">{{ product.expiry_date }}</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <a href="{{ url_for('static', filename='qrcodes/product_' ~ product.id ~ '.png') }}" target="_blank" title="Open QR Code in new window">
+                                                <img src="{{ url_for('static', filename='qrcodes/product_' ~ product.id ~ '.png') }}" 
+                                                     alt="QR" 
+                                                     style="width: 45px; height: 45px; border: 1.5px solid var(--border-color); border-radius: 4px; vertical-align: middle; transition: transform 0.2s;"
+                                                     onmouseover="this.style.transform='scale(2.5)';"
+                                                     onmouseout="this.style.transform='scale(1)';">
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+                        <i class="fa-solid fa-inbox" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p>No products registered yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Set default date to tomorrow
+    window.onload = function() {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        const yyyy = tomorrow.getFullYear();
+        const mm = String(tomorrow.getMonth() + 1).padStart(2, '0');
+        const dd = String(tomorrow.getDate()).padStart(2, '0');
+        document.getElementById('expiry_date').min = `${yyyy}-${mm}-${dd}`;
+    };
+</script>
+{% endblock %}

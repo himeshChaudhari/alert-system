@@ -1,0 +1,582 @@
+
+============================================================
+Timestamp: 2026-06-03 23:32:18
+To: customer@retail.com
+Subject: Alert: Your product 'Greek Yogurt' is expiring in 7 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                    <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                    <p>Dear Jane Customer,</p>
+                    <p>This is an automated alert to notify you that the product <strong>Greek Yogurt</strong> you purchased is expiring soon.</p>
+                    <p><strong>Product Details:</strong></p>
+                    <ul>
+                        <li>Product Name: Greek Yogurt</li>
+                        <li>Expiry Date: 2026-06-10</li>
+                        <li>Days remaining: 7 day(s)</li>
+                    </ul>
+                    <p>Please consume or dispose of the product accordingly.</p>
+                    <p>Thank you for shopping with us!</p>
+                    
+============================================================
+
+============================================================
+Timestamp: 2026-06-03 23:32:22
+To: customer@retail.com
+Subject: Alert: Your product 'Fresh Milk' is expiring in 3 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                    <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                    <p>Dear Jane Customer,</p>
+                    <p>This is an automated alert to notify you that the product <strong>Fresh Milk</strong> you purchased is expiring soon.</p>
+                    <p><strong>Product Details:</strong></p>
+                    <ul>
+                        <li>Product Name: Fresh Milk</li>
+                        <li>Expiry Date: 2026-06-06</li>
+                        <li>Days remaining: 3 day(s)</li>
+                    </ul>
+                    <p>Please consume or dispose of the product accordingly.</p>
+                    <p>Thank you for shopping with us!</p>
+                    
+============================================================
+
+============================================================
+Timestamp: 2026-06-03 23:32:26
+To: john@gmail.com
+Subject: Alert: Your product 'Organic Spinach' is expiring in 3 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                    <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                    <p>Dear John Doe,</p>
+                    <p>This is an automated alert to notify you that the product <strong>Organic Spinach</strong> you purchased is expiring soon.</p>
+                    <p><strong>Product Details:</strong></p>
+                    <ul>
+                        <li>Product Name: Organic Spinach</li>
+                        <li>Expiry Date: 2026-06-06</li>
+                        <li>Days remaining: 3 day(s)</li>
+                    </ul>
+                    <p>Please consume or dispose of the product accordingly.</p>
+                    <p>Thank you for shopping with us!</p>
+                    
+============================================================
+
+============================================================
+Timestamp: 2026-06-03 23:32:30
+To: customer@retail.com
+Subject: Alert: Your product 'Whole Wheat Bread' is expiring in 1 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                    <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                    <p>Dear Jane Customer,</p>
+                    <p>This is an automated alert to notify you that the product <strong>Whole Wheat Bread</strong> you purchased is expiring soon.</p>
+                    <p><strong>Product Details:</strong></p>
+                    <ul>
+                        <li>Product Name: Whole Wheat Bread</li>
+                        <li>Expiry Date: 2026-06-04</li>
+                        <li>Days remaining: 1 day(s)</li>
+                    </ul>
+                    <p>Please consume or dispose of the product accordingly.</p>
+                    <p>Thank you for shopping with us!</p>
+                    
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 18:01:45
+To: shlokgharat14@gmail.com
+Subject: Alert: Your product 'Peanut Butter' is expiring in 1 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                    <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                    <p>Dear shlok,</p>
+                    <p>This is an automated alert to notify you that the product <strong>Peanut Butter</strong> you purchased is expiring soon.</p>
+                    <p><strong>Product Details:</strong></p>
+                    <ul>
+                        <li>Product Name: Peanut Butter</li>
+                        <li>Expiry Date: 2026-06-05</li>
+                        <li>Days remaining: 1 day(s)</li>
+                    </ul>
+                    <p>Please consume or dispose of the product accordingly.</p>
+                    <p>Thank you for shopping with us!</p>
+                    
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 18:39:27
+To: test_cust1@example.com
+Subject: Alert: Your product 'SMS Alert Test Product' is expiring in 7 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear SMS Cust 1,</p>
+                        <p>This is an automated alert to notify you that the product <strong>SMS Alert Test Product</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: SMS Alert Test Product</li>
+                            <li>Expiry Date: 2026-06-11</li>
+                            <li>Days remaining: 7 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 18:39:31
+To: test_cust3@example.com
+Subject: Alert: Your product 'SMS Alert Test Product' is expiring in 7 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear SMS Cust 3,</p>
+                        <p>This is an automated alert to notify you that the product <strong>SMS Alert Test Product</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: SMS Alert Test Product</li>
+                            <li>Expiry Date: 2026-06-11</li>
+                            <li>Days remaining: 7 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 18:39:51
+To: test_cust1@example.com
+Subject: Alert: Your product 'SMS Alert Test Product' is expiring in 7 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear SMS Cust 1,</p>
+                        <p>This is an automated alert to notify you that the product <strong>SMS Alert Test Product</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: SMS Alert Test Product</li>
+                            <li>Expiry Date: 2026-06-11</li>
+                            <li>Days remaining: 7 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 18:39:55
+To: test_cust3@example.com
+Subject: Alert: Your product 'SMS Alert Test Product' is expiring in 7 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear SMS Cust 3,</p>
+                        <p>This is an automated alert to notify you that the product <strong>SMS Alert Test Product</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: SMS Alert Test Product</li>
+                            <li>Expiry Date: 2026-06-11</li>
+                            <li>Days remaining: 7 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 18:44:15
+To: himeshchaudhari2332@gmail.com
+Subject: Alert: Your product 'Peanut Butter' is expiring in 1 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Himesh Chaudhari,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Peanut Butter</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Peanut Butter</li>
+                            <li>Expiry Date: 2026-06-05</li>
+                            <li>Days remaining: 1 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 19:04:46
+To: shlokgharat14@gmail.com
+Subject: Alert: Your product 'pringles' is expiring in 1 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear shlok,</p>
+                        <p>This is an automated alert to notify you that the product <strong>pringles</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: pringles</li>
+                            <li>Expiry Date: 2026-06-05</li>
+                            <li>Days remaining: 1 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 19:04:47
+To: shlokgharat14@gmail.com
+Subject: Alert: Your product 'pringles' is expiring in 1 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear shlok,</p>
+                        <p>This is an automated alert to notify you that the product <strong>pringles</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: pringles</li>
+                            <li>Expiry Date: 2026-06-05</li>
+                            <li>Days remaining: 1 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 19:04:50
+To: himeshchaudhari2332@gmail.com
+Subject: Alert: Your product 'pringles' is expiring in 1 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Himesh Chaudhari,</p>
+                        <p>This is an automated alert to notify you that the product <strong>pringles</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: pringles</li>
+                            <li>Expiry Date: 2026-06-05</li>
+                            <li>Days remaining: 1 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 19:04:51
+To: himeshchaudhari2332@gmail.com
+Subject: Alert: Your product 'pringles' is expiring in 1 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Himesh Chaudhari,</p>
+                        <p>This is an automated alert to notify you that the product <strong>pringles</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: pringles</li>
+                            <li>Expiry Date: 2026-06-05</li>
+                            <li>Days remaining: 1 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 19:23:37
+To: himeshchaudhari2332@gmail.com
+Subject: Alert: Your product 'Lays' is expiring in 1 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Himesh Chaudhari,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Lays</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Lays</li>
+                            <li>Expiry Date: 2026-06-05</li>
+                            <li>Days remaining: 1 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 19:23:41
+To: shlokgharat14@gmail.com
+Subject: Alert: Your product 'Lays' is expiring in 1 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear shlok,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Lays</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Lays</li>
+                            <li>Expiry Date: 2026-06-05</li>
+                            <li>Days remaining: 1 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 19:40:08
+To: shlokgharat14@gmail.com
+Subject: Alert: Your product 'Amul Milk' is expiring in 1 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear shlok,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Amul Milk</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Amul Milk</li>
+                            <li>Expiry Date: 2026-06-05</li>
+                            <li>Days remaining: 1 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-04 19:40:12
+To: himeshchaudhari2332@gmail.com
+Subject: Alert: Your product 'Amul Milk' is expiring in 1 day(s)!
+SMTP Status: Failed ([WinError 10061] No connection could be made because the target machine actively refused it) - Logged Mock Email
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Himesh Chaudhari,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Amul Milk</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Amul Milk</li>
+                            <li>Expiry Date: 2026-06-05</li>
+                            <li>Days remaining: 1 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-06 12:51:21
+To: himeshchaudhari2332@gmail.com
+Subject: Test Email
+SMTP Status: Failed (Connection unexpectedly closed: The read operation timed out) - Logged Mock Email
+------------------------------------------------------------
+<h1>Hello Himesh</h1><p>Email automation is working.</p>
+============================================================
+
+============================================================
+Timestamp: 2026-06-06 13:01:36
+To: himeshchaudhari2332@gmail.com
+Subject: Test Email
+SMTP Status: Sent
+------------------------------------------------------------
+<h1>Hello Himesh</h1><p>Email automation is working.</p>
+============================================================
+
+============================================================
+Timestamp: 2026-06-06 13:23:07
+To: your_email@gmail.com
+Subject: Test Email
+SMTP Status: Failed ((530, b'5.7.0 Authentication Required. For more information, go to\n5.7.0  https://support.google.com/accounts/troubleshooter/2402620. 98e67ed59e1d1-3712fcb2607sm3123157a91.0 - gsmtp', 'himeshchaudhariart@gmail.com')) - Logged Mock Email
+------------------------------------------------------------
+<h1>Hello Himesh</h1><p>Email automation is working.</p>
+============================================================
+
+============================================================
+Timestamp: 2026-06-06 13:27:12
+To: your_email@gmail.com
+Subject: Test Email
+SMTP Status: Sent
+------------------------------------------------------------
+<h1>Hello Himesh</h1><p>Email automation is working.</p>
+============================================================
+
+============================================================
+Timestamp: 2026-06-06 14:00:09
+To: himeshchaudhari2332@gmail.com
+Subject: Alert: Your product 'ParleG' is expiring in 1 day(s)!
+SMTP Status: Sent
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Himesh Chaudhari,</p>
+                        <p>This is an automated alert to notify you that the product <strong>ParleG</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: ParleG</li>
+                            <li>Expiry Date: 2026-06-07</li>
+                            <li>Days remaining: 1 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-06 23:51:10
+To: shlokgharat14@gmail.com
+Subject: Alert: Your product 'ParleG' is expiring in 1 day(s)!
+SMTP Status: Sent
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear shlok,</p>
+                        <p>This is an automated alert to notify you that the product <strong>ParleG</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: ParleG</li>
+                            <li>Expiry Date: 2026-06-07</li>
+                            <li>Days remaining: 1 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-11 00:04:20
+To: shlokgharat14@gmail.com
+Subject: Alert: Your product 'Milk' is expiring in 3 day(s)!
+SMTP Status: Sent
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear shlok,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Milk</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Milk</li>
+                            <li>Expiry Date: 2026-06-14</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-11 00:04:21
+To: shlokgharat14@gmail.com
+Subject: Alert: Your product 'Milk' is expiring in 3 day(s)!
+SMTP Status: Sent
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear shlok,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Milk</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Milk</li>
+                            <li>Expiry Date: 2026-06-14</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-11 00:04:24
+To: himeshchaudhari2332@gmail.com
+Subject: Alert: Your product 'Milk' is expiring in 3 day(s)!
+SMTP Status: Sent
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Himesh Chaudhari,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Milk</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Milk</li>
+                            <li>Expiry Date: 2026-06-14</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-11 00:04:24
+To: himeshchaudhari2332@gmail.com
+Subject: Alert: Your product 'Milk' is expiring in 3 day(s)!
+SMTP Status: Sent
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Himesh Chaudhari,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Milk</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Milk</li>
+                            <li>Expiry Date: 2026-06-14</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-11 00:04:27
+To: khavleyojana@gmail.com
+Subject: Alert: Your product 'Milk' is expiring in 3 day(s)!
+SMTP Status: Sent
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Yojana,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Milk</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Milk</li>
+                            <li>Expiry Date: 2026-06-14</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================
+
+============================================================
+Timestamp: 2026-06-11 00:04:28
+To: khavleyojana@gmail.com
+Subject: Alert: Your product 'Milk' is expiring in 3 day(s)!
+SMTP Status: Sent
+------------------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Yojana,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Milk</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Milk</li>
+                            <li>Expiry Date: 2026-06-14</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+============================================================

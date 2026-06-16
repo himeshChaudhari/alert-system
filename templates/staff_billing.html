@@ -1,0 +1,665 @@
+{% extends 'base.html' %}
+
+{% block title %}Billing Counter - ExpiryAlert{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 2rem;">
+    <h1>Cashier Billing Counter</h1>
+    <p class="subtitle">Search for a customer, scan product QR codes, and checkout purchases.</p>
+</div>
+
+<div class="grid-2">
+    <!-- Left Column: Customer Search & Checkout Cart -->
+    <div>
+        <!-- Step 1: Customer Lookup -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h3 class="card-title">
+                <i class="fa-solid fa-user-check" style="color: var(--primary);"></i>
+                1. Select Customer
+            </h3>
+            
+            <div id="customer-search-section">
+                <div class="form-group" style="display: flex; gap: 0.5rem; margin-bottom: 0;">
+                    <input type="text" id="phone-search" class="form-control" placeholder="Enter customer phone (e.g. 3333333333)" style="flex: 1;">
+                    <button type="button" id="btn-lookup" class="btn btn-primary" onclick="lookupCustomer()">
+                        <i class="fa-solid fa-search"></i> Find
+                    </button>
+                </div>
+                <div id="lookup-feedback" style="margin-top: 0.5rem; font-size: 0.85rem; display: none;"></div>
+                
+                <!-- Inline Customer Creation Form -->
+                <div id="customer-create-section" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);">
+                    <div class="form-group">
+                        <label for="new-customer-name">New Customer Name</label>
+                        <input type="text" id="new-customer-name" class="form-control" placeholder="e.g. John Doe">
+                    </div>
+                    <button type="button" class="btn btn-primary btn-block" onclick="createCustomerProfile()">
+                        <i class="fa-solid fa-user-plus"></i> Create &amp; Select Customer
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Customer Details Display -->
+            <div id="customer-details" style="display: none; padding-top: 1rem; border-top: 1px dashed var(--border-color); margin-top: 1rem;">
+                <p style="font-size: 0.95rem; margin-bottom: 0.25rem;">
+                    <strong>Customer:</strong> <span id="customer-name-display" style="color: var(--text-primary); font-weight: 600;"></span>
+                </p>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem;">
+                    <strong>Email:</strong> <span id="customer-email-display"></span>
+                </p>
+                <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;" onclick="resetCustomer()">
+                    <i class="fa-solid fa-rotate-left"></i> Change Customer
+                </button>
+            </div>
+        </div>
+        
+        <!-- Step 3: Checkout Cart -->
+        <div class="card">
+            <h3 class="card-title">
+                <i class="fa-solid fa-cart-shopping" style="color: var(--success);"></i>
+                3. Checkout Items
+            </h3>
+            
+            <div id="cart-container">
+                <div id="empty-cart-message" style="text-align: center; padding: 2rem 0; color: var(--text-secondary);">
+                    <i class="fa-solid fa-basket-shopping" style="font-size: 2rem; margin-bottom: 0.5rem; opacity: 0.5;"></i>
+                    <p>No items scanned yet.</p>
+                </div>
+                
+                <div id="cart-table-wrapper" style="display: none; max-height: 300px; overflow-y: auto;">
+                    <table class="table" style="width: 100%;">
+                        <thead>
+                            <tr>
+                                <th>Product</th>
+                                <th style="text-align: center;">Qty</th>
+                                <th style="text-align: right;">Unit Price</th>
+                                <th style="text-align: right;">Line Total</th>
+                                <th style="text-align: right;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="cart-items-body">
+                            <!-- JS populated -->
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Grand Total -->
+                <div id="grand-total-section" style="display: none; margin-top: 1rem; padding: 1.25rem; background: var(--light-green); border: 1px solid var(--primary); border-radius: var(--radius-sm);">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span style="font-size: 1.1rem; font-weight: 600; color: var(--text-primary);">
+                            <i class="fa-solid fa-indian-rupee-sign" style="color: var(--success);"></i> Grand Total
+                        </span>
+                        <span id="grand-total-value" style="font-size: 1.4rem; font-weight: 700; color: var(--success);">
+                            ₹0.00
+                        </span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                        <span id="total-items-count">0</span> item(s) across <span id="total-products-count">0</span> product(s)
+                    </div>
+                </div>
+                
+                <div style="margin-top: 1.5rem; border-top: 1px solid var(--border-color); padding-top: 1rem;">
+                    <button type="button" id="btn-checkout" class="btn btn-primary btn-block" disabled onclick="submitCheckout()">
+                        <i class="fa-solid fa-check-double"></i> Complete Sale &amp; Generate Invoice
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column: QR Code Scanner -->
+    <div>
+        <div class="card">
+            <h3 class="card-title">
+                <i class="fa-solid fa-camera" style="color: var(--warning);"></i>
+                2. Scan Product QR
+            </h3>
+            
+            <!-- Live Web Camera Feed -->
+            <div class="scanner-container">
+                <div id="reader"></div>
+            </div>
+            
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap;">
+                <button type="button" class="btn btn-secondary" style="flex: 1; font-size: 0.85rem; min-width: 100px;" onclick="startScanning()">
+                    <i class="fa-solid fa-play"></i> Start
+                </button>
+                <button type="button" class="btn btn-secondary" style="flex: 1; font-size: 0.85rem; min-width: 100px;" onclick="stopScanning()">
+                    <i class="fa-solid fa-stop"></i> Stop
+                </button>
+                <button type="button" id="btn-resume-scan" class="btn btn-secondary" style="flex: 1; font-size: 0.85rem; min-width: 120px;" onclick="resumeScanning()" disabled>
+                    <i class="fa-solid fa-play-pause"></i> Resume
+                </button>
+            </div>
+            
+            <div id="scanner-status" style="font-size: 0.85rem; color: var(--text-secondary); text-align: center; margin-bottom: 1.5rem; font-weight: 500;">
+                Status: Stopped
+            </div>
+            
+            <!-- Manual Entry / Simulation (Crucial for testing without camera/prints) -->
+            <div class="manual-scan-box">
+                <label for="manual-qr-payload" style="display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 500;">
+                    <i class="fa-solid fa-keyboard"></i> Simulate Scan (Type QR Data)
+                </label>
+                <div style="display: flex; gap: 0.5rem;">
+                    <input type="text" id="manual-qr-payload" class="form-control" placeholder="e.g. EXP:2:2026-06-06" style="flex: 1;">
+                    <button type="button" class="btn btn-secondary" onclick="simulateScan()">
+                        <i class="fa-solid fa-plus"></i> Add
+                    </button>
+                </div>
+                <div style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--text-secondary);">
+                    Tip: Copy qr_code_data from products table or staff dashboard (e.g. <code>EXP:1:2026-06-04</code>)
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<!-- HTML5-QRCODE scanner library -->
+<script src="https://unpkg.com/html5-qrcode"></script>
+
+<script>
+    // State management
+    let selectedCustomer = null;
+    let cart = []; // Array of { id, expiry, qty, name, price }
+    let html5QrcodeScanner = null;
+    let isScannerPaused = false;
+    let cooldownTimeout = null;
+
+    // Web Audio Beep Sound Generator
+    function playBeep() {
+        try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            const audioCtx = new AudioContextClass();
+            const oscillator = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(1000, audioCtx.currentTime); // 1000Hz frequency
+            gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime); // low volume
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+            
+            oscillator.start();
+            oscillator.stop(audioCtx.currentTime + 0.1); // play for 0.1 seconds (100ms)
+        } catch (err) {
+            console.warn("Audio Context beep error:", err);
+        }
+    }
+
+    // 1. Customer Lookup & Creation Functions
+    function lookupCustomer() {
+        const phone = document.getElementById('phone-search').value.trim();
+        const feedbackDiv = document.getElementById('lookup-feedback');
+        const createDiv = document.getElementById('customer-create-section');
+        
+        if (!phone) {
+            showFeedback('Please enter a phone number.', 'danger');
+            return;
+        }
+        
+        feedbackDiv.style.display = 'block';
+        feedbackDiv.className = 'alert alert-info';
+        feedbackDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Searching...';
+        createDiv.style.display = 'none';
+        
+        fetch(`/staff/lookup-customer?phone=${encodeURIComponent(phone)}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    selectedCustomer = data.customer;
+                    
+                    // Update displays
+                    document.getElementById('customer-search-section').style.display = 'none';
+                    document.getElementById('customer-details').style.display = 'block';
+                    document.getElementById('customer-name-display').innerText = selectedCustomer.name;
+                    document.getElementById('customer-email-display').innerText = selectedCustomer.email || 'Not registered (No Email)';
+                    
+                    feedbackDiv.style.display = 'none';
+                    
+                    // Update checkout button state
+                    validateCheckoutState();
+                } else {
+                    showFeedback('Customer not found. Enter name below to automatically register a profile.', 'warning');
+                    createDiv.style.display = 'block';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                showFeedback('Error looking up customer.', 'danger');
+            });
+    }
+    
+    function createCustomerProfile() {
+        const phone = document.getElementById('phone-search').value.trim();
+        const name = document.getElementById('new-customer-name').value.trim();
+        const feedbackDiv = document.getElementById('lookup-feedback');
+        
+        if (!name) {
+            alert('Please enter a customer name.');
+            return;
+        }
+        
+        fetch('/staff/create-customer', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: name, phone: phone })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                selectedCustomer = data.customer;
+                
+                // Update displays
+                document.getElementById('customer-search-section').style.display = 'none';
+                document.getElementById('customer-details').style.display = 'block';
+                document.getElementById('customer-name-display').innerText = selectedCustomer.name;
+                document.getElementById('customer-email-display').innerText = 'Not registered (No Email)';
+                
+                feedbackDiv.style.display = 'none';
+                document.getElementById('customer-create-section').style.display = 'none';
+                
+                validateCheckoutState();
+            } else {
+                alert('Error creating customer: ' + data.message);
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Network error registering customer.');
+        });
+    }
+    
+    function resetCustomer() {
+        selectedCustomer = null;
+        document.getElementById('customer-search-section').style.display = 'block';
+        document.getElementById('customer-details').style.display = 'none';
+        document.getElementById('customer-create-section').style.display = 'none';
+        document.getElementById('phone-search').value = '';
+        document.getElementById('new-customer-name').value = '';
+        document.getElementById('lookup-feedback').style.display = 'none';
+        validateCheckoutState();
+    }
+    
+    function showFeedback(msg, type) {
+        const feedbackDiv = document.getElementById('lookup-feedback');
+        feedbackDiv.style.display = 'block';
+        feedbackDiv.className = `alert alert-${type}`;
+        feedbackDiv.innerText = msg;
+    }
+    
+    // 2. Cart Functions (with price tracking and stock validation)
+    function addProductToCart(productId, expiryDate) {
+        // Check if product already in cart — if so, increment quantity
+        const existing = cart.find(item => item.id === productId);
+        if (existing) {
+            if (existing.qty + 1 > existing.stock_quantity) {
+                alert(`⚠️ Cannot add more. Only ${existing.stock_quantity} pack(s) available in stock.`);
+                return;
+            }
+            existing.qty += 1;
+            updateCartUI();
+            return;
+        }
+        
+        // Fetch product details from the server
+        fetch(`/staff/product-price/${productId}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    if (data.product.stock_quantity <= 0) {
+                        alert(`⚠️ Product "${data.product.name}" is out of stock!`);
+                        return;
+                    }
+                    cart.push({
+                        id: productId,
+                        expiry: expiryDate,
+                        qty: 1,
+                        name: data.product.name,
+                        price: data.product.price,
+                        stock_quantity: data.product.stock_quantity,
+                        pack_size: data.product.pack_size,
+                        unit: data.product.unit
+                    });
+                } else {
+                    // Fallback: add without info
+                    cart.push({
+                        id: productId,
+                        expiry: expiryDate,
+                        qty: 1,
+                        name: `Product #${productId}`,
+                        price: 0,
+                        stock_quantity: 999,
+                        pack_size: 1.00,
+                        unit: 'piece'
+                    });
+                    console.warn('Could not fetch details for product', productId);
+                }
+                updateCartUI();
+            })
+            .catch(err => {
+                console.error('Error fetching product details:', err);
+                cart.push({
+                    id: productId,
+                    expiry: expiryDate,
+                    qty: 1,
+                    name: `Product #${productId}`,
+                    price: 0,
+                    stock_quantity: 999,
+                    pack_size: 1.00,
+                    unit: 'piece'
+                });
+                updateCartUI();
+            });
+    }
+    
+    function removeCartItem(index) {
+        cart.splice(index, 1);
+        updateCartUI();
+    }
+    
+    function updateCartUI() {
+        const emptyMsg = document.getElementById('empty-cart-message');
+        const cartWrapper = document.getElementById('cart-table-wrapper');
+        const cartBody = document.getElementById('cart-items-body');
+        const grandTotalSection = document.getElementById('grand-total-section');
+        
+        if (cart.length === 0) {
+            emptyMsg.style.display = 'block';
+            cartWrapper.style.display = 'none';
+            grandTotalSection.style.display = 'none';
+        } else {
+            emptyMsg.style.display = 'none';
+            cartWrapper.style.display = 'block';
+            grandTotalSection.style.display = 'block';
+            
+            let grandTotal = 0;
+            let totalItems = 0;
+            
+            cartBody.innerHTML = '';
+            cart.forEach((item, index) => {
+                const lineTotal = item.price * item.qty;
+                grandTotal += lineTotal;
+                totalItems += item.qty;
+                
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>
+                        <div><strong>${item.name}</strong></div>
+                        <div style="font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.1rem;">
+                            ${item.pack_size} ${item.unit} Pack · Stock: ${item.stock_quantity}
+                        </div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.1rem;">#${item.id} · Exp: ${item.expiry}</div>
+                    </td>
+                    <td style="text-align: center; white-space: nowrap;">
+                        <div style="display: inline-flex; align-items: center; gap: 0.3rem;">
+                            <button type="button" class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.85rem; border-radius: 4px;" onclick="decrementQty(${index})">
+                                <i class="fa-solid fa-minus"></i>
+                            </button>
+                            <input type="number" class="form-control" style="width: 65px; padding: 0.2rem 0.4rem; text-align: center; font-size: 0.9rem; font-weight: 600; display: inline-block;" 
+                                   value="${item.qty}" min="1" max="${item.stock_quantity}" 
+                                   onchange="updateQtyDirectly(${index}, this.value)">
+                            <button type="button" class="btn btn-secondary" style="padding: 0.2rem 0.5rem; font-size: 0.85rem; border-radius: 4px;" onclick="incrementQty(${index})">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    </td>
+                    <td style="text-align: right; font-family: monospace; font-weight: 500;">
+                        ₹${item.price.toFixed(2)}
+                    </td>
+                    <td style="text-align: right; font-family: monospace; font-weight: 600; color: var(--success);">
+                        ₹${lineTotal.toFixed(2)}
+                    </td>
+                    <td style="text-align: right;">
+                        <button type="button" class="btn btn-secondary" style="padding: 0.25rem 0.5rem; color: var(--danger); border-color: rgba(239, 68, 68, 0.2);" onclick="removeCartItem(${index})">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                `;
+                cartBody.appendChild(row);
+            });
+            
+            // Update grand total display
+            document.getElementById('grand-total-value').textContent = `₹${grandTotal.toFixed(2)}`;
+            document.getElementById('total-items-count').textContent = totalItems;
+            document.getElementById('total-products-count').textContent = cart.length;
+        }
+        validateCheckoutState();
+    }
+
+    function incrementQty(index) {
+        const item = cart[index];
+        if (item.qty + 1 > item.stock_quantity) {
+            alert(`⚠️ Insufficient stock available. Only ${item.stock_quantity} pack(s) in stock.`);
+            return;
+        }
+        item.qty += 1;
+        updateCartUI();
+    }
+    
+    function decrementQty(index) {
+        const item = cart[index];
+        if (item.qty <= 1) {
+            removeCartItem(index);
+            return;
+        }
+        item.qty -= 1;
+        updateCartUI();
+    }
+
+    function updateQtyDirectly(index, value) {
+        const item = cart[index];
+        const newQty = parseInt(value);
+        
+        if (isNaN(newQty) || newQty < 1) {
+            alert("⚠️ Please enter a valid quantity (1 or more).");
+            updateCartUI();
+            return;
+        }
+        
+        if (newQty > item.stock_quantity) {
+            alert(`⚠️ Insufficient stock available. Only ${item.stock_quantity} pack(s) in stock.`);
+            updateCartUI();
+            return;
+        }
+        
+        item.qty = newQty;
+        updateCartUI();
+    }
+    
+    function validateCheckoutState() {
+        const btnCheckout = document.getElementById('btn-checkout');
+        if (selectedCustomer && cart.length > 0) {
+            btnCheckout.disabled = false;
+        } else {
+            btnCheckout.disabled = true;
+        }
+    }
+    
+    // 3. QR Decoding Handler
+    function handleQrDecoded(decodedText) {
+        if (isScannerPaused) {
+            // Silently ignore duplicate scans during cooldown window
+            return;
+        }
+        
+        console.log("Decoded text:", decodedText);
+        
+        // Expected format: EXP:productId:expiryDate
+        if (!decodedText.startsWith("EXP:")) {
+            console.warn("Ignored scanned code: Doesn't match EXP format.");
+            return;
+        }
+        
+        const parts = decodedText.split(":");
+        if (parts.length < 3) {
+            console.warn("Ignored scanned code: Insufficient fields.");
+            return;
+        }
+        
+        const productId = parseInt(parts[1]);
+        const expiryDate = parts[2];
+        
+        if (!isNaN(productId) && expiryDate) {
+            // Trigger pause and cooldown
+            isScannerPaused = true;
+            playBeep();
+            
+            const statusDiv = document.getElementById('scanner-status');
+            const btnResume = document.getElementById('btn-resume-scan');
+            if (statusDiv) statusDiv.innerHTML = '<span class="badge warning"><i class="fa-solid fa-hourglass-half fa-spin"></i> Paused (Cooldown)...</span>';
+            if (btnResume) btnResume.disabled = false;
+            
+            addProductToCart(productId, expiryDate);
+            
+            if (navigator.vibrate) navigator.vibrate(100);
+            
+            // Auto-resume after 2.5 seconds (2-3s)
+            cooldownTimeout = setTimeout(resumeScanning, 2500);
+        }
+    }
+    
+    // 4. Manual Simulation Form
+    function simulateScan() {
+        const payloadInput = document.getElementById('manual-qr-payload');
+        const text = payloadInput.value.trim();
+        
+        if (!text) return;
+        
+        handleQrDecoded(text);
+        payloadInput.value = '';
+    }
+    
+    // 5. Checkout Transaction API Call
+    function submitCheckout() {
+        if (!selectedCustomer || cart.length === 0) return;
+        
+        const product_ids = [];
+        cart.forEach(item => {
+            for (let i = 0; i < item.qty; i++) {
+                product_ids.push(item.id);
+            }
+        });
+        
+        const payload = {
+            customer_id: selectedCustomer.id,
+            product_ids: product_ids
+        };
+        
+        // Disable button to prevent double-click
+        document.getElementById('btn-checkout').disabled = true;
+        document.getElementById('btn-checkout').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Processing...';
+        
+        fetch('/staff/checkout', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Show success and redirect to invoice
+                const viewInvoice = confirm(
+                    `✅ ${data.message}\n\nWould you like to view the invoice?`
+                );
+                
+                if (viewInvoice && data.bill_id) {
+                    window.open(`/staff/bill/${data.bill_id}`, '_blank');
+                }
+                
+                // Reset transaction
+                resetCustomer();
+                cart = [];
+                updateCartUI();
+            } else {
+                alert("Checkout error: " + data.message);
+            }
+            
+            // Re-enable checkout button
+            document.getElementById('btn-checkout').disabled = true;
+            document.getElementById('btn-checkout').innerHTML = '<i class="fa-solid fa-check-double"></i> Complete Sale & Generate Invoice';
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error submitting checkout.");
+            document.getElementById('btn-checkout').disabled = false;
+            document.getElementById('btn-checkout').innerHTML = '<i class="fa-solid fa-check-double"></i> Complete Sale & Generate Invoice';
+        });
+    }
+    
+    // 6. Camera Controller
+    function startScanning() {
+        if (html5QrcodeScanner) {
+            stopScanning();
+        }
+        
+        html5QrcodeScanner = new Html5Qrcode("reader");
+        const config = { fps: 10, qrbox: { width: 200, height: 200 } };
+        
+        html5QrcodeScanner.start(
+            { facingMode: "environment" }, 
+            config,
+            (decodedText) => {
+                handleQrDecoded(decodedText);
+            },
+            (errorMessage) => {
+                // Ignore scanning noise/failures
+            }
+        ).then(() => {
+            isScannerPaused = false;
+            document.getElementById('scanner-status').innerHTML = '<span class="badge success"><i class="fa-solid fa-circle-check"></i> Active / Scanning...</span>';
+            document.getElementById('btn-resume-scan').disabled = true;
+        }).catch(err => {
+            console.error("Failed to start camera scanner:", err);
+            alert("Could not access camera. Please check camera permissions or use the simulation input instead.");
+            document.getElementById('scanner-status').innerHTML = '<span class="badge danger">Camera Access Failed</span>';
+        });
+    }
+    
+    function stopScanning() {
+        if (cooldownTimeout) {
+            clearTimeout(cooldownTimeout);
+            cooldownTimeout = null;
+        }
+        isScannerPaused = false;
+        
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => {
+                console.log("Scanner stopped.");
+                document.getElementById('reader').innerHTML = '';
+                html5QrcodeScanner = null;
+                document.getElementById('scanner-status').innerHTML = '<span class="badge primary">Status: Stopped</span>';
+                document.getElementById('btn-resume-scan').disabled = true;
+            }).catch(err => {
+                console.error("Failed to stop scanner:", err);
+            });
+        } else {
+            document.getElementById('scanner-status').innerHTML = '<span class="badge primary">Status: Stopped</span>';
+            document.getElementById('btn-resume-scan').disabled = true;
+        }
+    }
+    
+    function resumeScanning() {
+        if (cooldownTimeout) {
+            clearTimeout(cooldownTimeout);
+            cooldownTimeout = null;
+        }
+        isScannerPaused = false;
+        const statusDiv = document.getElementById('scanner-status');
+        const btnResume = document.getElementById('btn-resume-scan');
+        if (statusDiv && html5QrcodeScanner) {
+            statusDiv.innerHTML = '<span class="badge success"><i class="fa-solid fa-circle-check"></i> Active / Scanning...</span>';
+        } else if (statusDiv) {
+            statusDiv.innerHTML = '<span class="badge primary">Status: Stopped</span>';
+        }
+        if (btnResume) btnResume.disabled = true;
+    }
+</script>
+{% endblock %}
