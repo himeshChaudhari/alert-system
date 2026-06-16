@@ -1,9 +1,12 @@
+import sys
 import pymysql
-pymysql.install_as_MySQLdb()
+import pymysql.cursors
 
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file
+pymysql.install_as_MySQLdb()
+sys.modules['MySQLdb.cursors'] = pymysql.cursors
+
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file, g
 from collections import Counter
-from flask_mysqldb import MySQL
 import MySQLdb.cursors
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -28,6 +31,34 @@ app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
 app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
 app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'expiry_system')
 app.config['FAST2SMS_API_KEY'] = os.environ.get('FAST2SMS_API_KEY')
+
+class MySQL:
+    def __init__(self, app=None):
+        self.app = app
+        if app is not None:
+            self.init_app(app)
+
+    def init_app(self, app):
+        @app.teardown_appcontext
+        def teardown_db(exception):
+            db = g.pop('mysql_db', None)
+            if db is not None:
+                try:
+                    db.close()
+                except Exception:
+                    pass
+
+    @property
+    def connection(self):
+        if 'mysql_db' not in g:
+            from flask import current_app
+            g.mysql_db = pymysql.connect(
+                host=current_app.config['MYSQL_HOST'],
+                user=current_app.config['MYSQL_USER'],
+                password=current_app.config['MYSQL_PASSWORD'],
+                database=current_app.config['MYSQL_DB']
+            )
+        return g.mysql_db
 
 mysql = MySQL(app)
 
