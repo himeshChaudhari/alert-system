@@ -1,5 +1,4 @@
 Flask
-flask-mysqldb
 pymysql
 qrcode
 Pillow
