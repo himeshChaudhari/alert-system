@@ -1,8 +1,4 @@
 .env
 .env.local
 .env.development.local
-__pycache__/
-*.pyc
-*.pyo
-*.pyd
-
+__pycache__
