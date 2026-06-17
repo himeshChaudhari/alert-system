@@ -1034,7 +1034,7 @@ def handle_500_error(e):
     print(f"[ERROR 500 DEBUG TRACEBACK]\n{tb_str}")
     
     # Securely show the error if requested in the URL or configured in the environment
-    if request.args.get('debug_err') == 'true' or os.environ.get('SHOW_DEBUG_ERROR') == 'true':
+    if request.args.get('debug_err') == 'true' or (request.referrer and 'debug_err=true' in request.referrer) or os.environ.get('SHOW_DEBUG_ERROR') == 'true':
         return f"""
         <html>
             <head><title>500 Internal Server Error (Debug Mode)</title></head>
