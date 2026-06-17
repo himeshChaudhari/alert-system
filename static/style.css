@@ -597,8 +597,156 @@ footer {
     background-color: var(--bg-card);
 }
 
-/* Animations */
 @keyframes slideDown {
     from { transform: translateY(-12px); opacity: 0; }
     to { transform: translateY(0); opacity: 1; }
 }
+
+/* ================= SKELETON LOADERS & SHIMMER EFFECT ================= */
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+.skeleton-shimmer {
+    background: linear-gradient(90deg, #F3F4F6 25%, #E5E7EB 50%, #F3F4F6 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.5s infinite linear;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton-shimmer {
+        animation: none;
+        background: #E5E7EB;
+    }
+}
+
+/* Base skeletons shapes */
+.skeleton-box {
+    display: inline-block;
+    height: 100%;
+    width: 100%;
+    border-radius: var(--radius-sm);
+}
+
+.skeleton-circle {
+    display: inline-block;
+    border-radius: 50%;
+    width: 48px;
+    height: 48px;
+}
+
+.skeleton-title {
+    height: 24px;
+    width: 60%;
+    margin-bottom: 12px;
+    border-radius: 6px;
+}
+
+.skeleton-text {
+    height: 14px;
+    width: 90%;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.skeleton-text.short {
+    width: 45%;
+}
+
+.skeleton-button {
+    height: 38px;
+    width: 120px;
+    border-radius: var(--radius-sm);
+}
+
+/* Compound skeleton UI patterns */
+.skeleton-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02);
+}
+
+.skeleton-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.skeleton-table th,
+.skeleton-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.skeleton-table-row {
+    height: 20px;
+    width: 100%;
+    border-radius: 4px;
+}
+
+.skeleton-chart-box {
+    height: 300px;
+    width: 100%;
+    border-radius: var(--radius-lg);
+}
+
+.skeleton-qr-box {
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+    border-radius: var(--radius-md);
+}
+
+/* Visibility Control wrappers */
+.skeleton-wrapper {
+    display: block;
+    width: 100%;
+    animation: slideDown 0.3s ease;
+}
+
+.content-wrapper {
+    display: none;
+    opacity: 0;
+    transition: opacity 0.35s ease;
+}
+
+.content-wrapper.loaded {
+    display: block;
+    opacity: 1;
+}
+
+/* Button Loading States during form submissions */
+.btn-loading {
+    position: relative;
+    color: transparent !important;
+    pointer-events: none;
+}
+
+.btn-loading::after {
+    content: "";
+    position: absolute;
+    width: 16px;
+    height: 16px;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    margin: auto;
+    border: 3px solid transparent;
+    border-top-color: currentColor;
+    border-radius: 50%;
+    animation: button-spin 0.6s linear infinite;
+}
+
+@keyframes button-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+

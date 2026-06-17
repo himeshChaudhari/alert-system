@@ -93,6 +93,41 @@
         <p>&copy; 2026 QR-Based Retail Expiry Tracking & Consumer Alert System. All rights reserved.</p>
     </footer>
 
+    <!-- Global Page & Form loading script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Transition from skeletons to loaded content
+            const skeletons = document.querySelectorAll('.skeleton-wrapper');
+            const contents = document.querySelectorAll('.content-wrapper');
+            
+            skeletons.forEach(s => s.style.display = 'none');
+            contents.forEach(c => {
+                c.classList.add('loaded');
+            });
+            
+            // Dispatch a resize event in case Chart.js needs to auto-resize canvas contexts
+            window.dispatchEvent(new Event('resize'));
+
+            // Handle button loading states on standard HTML form submissions
+            const forms = document.querySelectorAll('form');
+            forms.forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    // For forms that submit normally via HTTP
+                    // Verify that it is not client-side only (or checkout forms)
+                    const isAjaxForm = form.getAttribute('data-ajax') === 'true' || e.defaultPrevented;
+                    if (!isAjaxForm) {
+                        const submitBtns = form.querySelectorAll('button[type="submit"], input[type="submit"]');
+                        submitBtns.forEach(btn => {
+                            btn.classList.add('btn-loading');
+                            btn.setAttribute('disabled', 'true');
+                            btn.setAttribute('aria-busy', 'true');
+                        });
+                    }
+                });
+            });
+        });
+    </script>
+
     {% block scripts %}{% endblock %}
 </body>
 </html>
