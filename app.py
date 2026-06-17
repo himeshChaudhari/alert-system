@@ -1,12 +1,6 @@
-import sys
-import pymysql
-import pymysql.cursors
-
-pymysql.install_as_MySQLdb()
-sys.modules['MySQLdb.cursors'] = pymysql.cursors
-
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file, g
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file
 from collections import Counter
+from flask_mysqldb import MySQL
 import MySQLdb.cursors
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -19,46 +13,20 @@ from email.mime.multipart import MIMEMultipart
 from functools import wraps
 import requests
 from dotenv import load_dotenv
+
 base_dir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(base_dir, '.env'))
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('secret_key', 'fallback_secret_key_for_vercel')
+app.secret_key = os.environ.get('secret_key')
 
 # Database Configuration
 app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
-app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
+app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD') 
 app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'expiry_system')
+app.config['MYSQL_PORT'] = int(os.environ.get('MYSQL_PORT', 3306))
 app.config['FAST2SMS_API_KEY'] = os.environ.get('FAST2SMS_API_KEY')
-
-class MySQL:
-    def __init__(self, app=None):
-        self.app = app
-        if app is not None:
-            self.init_app(app)
-
-    def init_app(self, app):
-        @app.teardown_appcontext
-        def teardown_db(exception):
-            db = g.pop('mysql_db', None)
-            if db is not None:
-                try:
-                    db.close()
-                except Exception:
-                    pass
-
-    @property
-    def connection(self):
-        if 'mysql_db' not in g:
-            from flask import current_app
-            g.mysql_db = pymysql.connect(
-                host=current_app.config['MYSQL_HOST'],
-                user=current_app.config['MYSQL_USER'],
-                password=current_app.config['MYSQL_PASSWORD'],
-                database=current_app.config['MYSQL_DB']
-            )
-        return g.mysql_db
 
 mysql = MySQL(app)
 
@@ -72,11 +40,16 @@ SMTP_SENDER = os.environ.get('SMTP_SENDER', '')
 ADMIN_EMAIL = os.environ.get('ADMIN_EMAIL', 'admin@retail.com')
 
 # Create email logs directory to store mock email text
+EMAIL_LOGS_DIR = os.path.join(base_dir, 'logs')
+os.makedirs(EMAIL_LOGS_DIR, exist_ok=True)
+EMAIL_LOG_FILE = os.path.join(EMAIL_LOGS_DIR, 'emails.log')
+SMS_LOG_FILE = os.path.join(EMAIL_LOGS_DIR, 'sms.log')
+
 # Helper function to send email alerts with a fallback logger
 def send_email_alert(subject, body, recipient_email):
     """
     Sends an email using smtplib. If the connection fails (e.g. SMTP server is not running),
-    it logs the email to standard console output so the user can verify the email content.
+    it writes the email to a local log file so the user can verify the email content.
     """
     msg = MIMEMultipart()
     msg['From'] = SMTP_SENDER
@@ -106,12 +79,21 @@ def send_email_alert(subject, body, recipient_email):
         error_msg = str(e)
         print(f"[SMTP WARNING] Failed to send email via SMTP to {recipient_email}: {e}")
         
-    # Log to console stdout (for testing and debugging on Vercel)
+    # Write to local file log anyway (for testing and debugging)
     try:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"\n[EMAIL LOG] {'='*50}\nTimestamp: {timestamp}\nTo: {recipient_email}\nSubject: {subject}\nSMTP Status: {'Sent' if email_sent else 'Failed (' + error_msg + ') - Logged Mock Email'}\n{'-'*50}\n{body}\n{'='*50}\n")
+        with open(EMAIL_LOG_FILE, 'a') as f:
+            f.write(f"\n{'='*60}\n")
+            f.write(f"Timestamp: {timestamp}\n")
+            f.write(f"To: {recipient_email}\n")
+            f.write(f"Subject: {subject}\n")
+            f.write(f"SMTP Status: {'Sent' if email_sent else 'Failed (' + error_msg + ') - Logged Mock Email'}\n")
+            f.write(f"{'-'*60}\n")
+            f.write(f"{body}\n")
+            f.write(f"{'='*60}\n")
+        print(f"[MOCK EMAIL] Email logged locally to {EMAIL_LOG_FILE}")
     except Exception as log_error:
-        print(f"[ERROR] Failed to output email log: {log_error}")
+        print(f"[ERROR] Failed to write mock email log: {log_error}")
         
     return email_sent
 
@@ -119,7 +101,7 @@ def send_email_alert(subject, body, recipient_email):
 def send_sms_alert(phone_number, message):
     """
     Sends an SMS using the Fast2SMS Quick SMS REST API (GET).
-    If the API key is not configured, it logs the message content to standard console output.
+    If the API key is not configured, it writes the message content to a local log file.
     """
     api_key = app.config.get('FAST2SMS_API_KEY')
     sms_sent = False
@@ -152,17 +134,24 @@ def send_sms_alert(phone_number, message):
             print(f"[SMS WARNING] Failed to send SMS via Fast2SMS to {phone_number}: {e}")
     else:
         status_msg = "No API Key configured - Logged Mock SMS"
-        print(f"[SMS INFO] Fast2SMS API Key not configured. Logging mock SMS to console.")
+        print(f"[SMS INFO] Fast2SMS API Key not configured. Logging mock SMS to {SMS_LOG_FILE}")
         
-    # Log to console stdout (for testing and debugging on Vercel)
+    # Log locally for verification
     try:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"\n[SMS LOG] {'='*50}\nTimestamp: {timestamp}\nTo: {phone_number}\nSMS Status: {'Sent' if sms_sent else 'Failed (' + status_msg + ')'}\n{'-'*50}\n{message}\n{'='*50}\n")
+        with open(SMS_LOG_FILE, 'a') as f:
+            f.write(f"\n{'='*60}\n")
+            f.write(f"Timestamp: {timestamp}\n")
+            f.write(f"To: {phone_number}\n")
+            f.write(f"SMS Status: {'Sent' if sms_sent else 'Failed (' + status_msg + ')'}\n")
+            f.write(f"{'-'*60}\n")
+            f.write(f"{message}\n")
+            f.write(f"{'='*60}\n")
+        print(f"[MOCK SMS] SMS logged locally to {SMS_LOG_FILE}")
     except Exception as log_error:
-        print(f"[ERROR] Failed to output SMS log: {log_error}")
+        print(f"[ERROR] Failed to write mock SMS log: {log_error}")
         
     return sms_sent
-
 
 # Authentication Decorators
 def login_required(f):
@@ -438,14 +427,26 @@ def register_product():
         # 2. Generate QR code payload (e.g. EXP:id:YYYY-MM-DD)
         qr_data = f"EXP:{product_id}:{expiry_date_str}"
         
-        # 3. Update the product record with the QR code data
+        # 3. Create static directories and save QR code as PNG image
+        qrcodes_dir = os.path.join(app.root_path, 'static', 'qrcodes')
+        os.makedirs(qrcodes_dir, exist_ok=True)
+        
+        qr = qrcode.QRCode(version=1, box_size=10, border=4)
+        qr.add_data(qr_data)
+        qr.make(fit=True)
+        img = qr.make_image(fill_color="black", back_color="white")
+        
+        qr_filename = f"product_{product_id}.png"
+        img.save(os.path.join(qrcodes_dir, qr_filename))
+        
+        # 4. Update the product record with the QR code data
         cur.execute(
             "UPDATE products SET qr_code_data = %s WHERE id = %s",
             (qr_data, product_id)
         )
         mysql.connection.commit()
         
-        flash(f'Product "{name}" ({pack_size} {unit} Pack, ₹{price_per_pack:.2f}, Stock: {stock_quantity}) registered successfully!', 'success')
+        flash(f'Product "{name}" ({pack_size} {unit} Pack, ₹{price_per_pack:.2f}, Stock: {stock_quantity}) registered and QR code generated!', 'success')
     except Exception as e:
         mysql.connection.rollback()
         flash(f'Error registering product: {e}', 'danger')
@@ -857,7 +858,8 @@ def run_expiry_alerts_check():
         host=app.config['MYSQL_HOST'],
         user=app.config['MYSQL_USER'],
         passwd=app.config['MYSQL_PASSWORD'],
-        db=app.config['MYSQL_DB']
+        db=app.config['MYSQL_DB'],
+        port=app.config.get('MYSQL_PORT', 3306)
     )
     cursor = db.cursor(MySQLdb.cursors.DictCursor)
     
@@ -970,83 +972,39 @@ def run_expiry_alerts_check():
     print(f"[SCHEDULER] Expiry alerts check finished. Total alerts sent/logged: {alerts_count}")
     return alerts_count
 
-@app.route('/api/cron/check-expiry', methods=['GET', 'POST'])
-def cron_check_expiry():
-    """Endpoint for Vercel Cron Jobs to trigger the daily alerts check."""
-    cron_secret = os.environ.get('CRON_SECRET')
-    auth_header = request.headers.get('Authorization')
-    vercel_cron = request.headers.get('X-Vercel-Cron')
-    
-    is_authorized = False
-    if vercel_cron == 'true':
-        is_authorized = True
-    elif cron_secret and auth_header == f"Bearer {cron_secret}":
-        is_authorized = True
-    elif cron_secret and request.args.get('secret') == cron_secret:
-        is_authorized = True
-    elif not cron_secret:
-        # If no secret is configured, allow trigger (useful for testing)
-        is_authorized = True
-        
-    if not is_authorized:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-        
-    try:
-        alerts_sent = run_expiry_alerts_check()
-        return jsonify({
-            'success': True,
-            'message': f'Cron job run completed. Sent {alerts_sent} alerts.'
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+# Setup background scheduler
+scheduler = BackgroundScheduler()
 
-# Setup background scheduler (Only for local development, disabled on Vercel)
-# Vercel serverless environment does not support background threads; we use Vercel Cron Jobs.
-if os.environ.get('VERCEL') != '1':
-    scheduler = BackgroundScheduler()
-    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        lock_file_path = os.path.join(base_dir, 'scheduler.lock')
-        should_start = True
-        try:
-            import fcntl
-            global _scheduler_lock_file
-            _scheduler_lock_file = open(lock_file_path, 'w')
-            fcntl.lockf(_scheduler_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except ImportError:
-            # Windows or non-UNIX environment, bypass file locking
-            print("[SCHEDULER] fcntl module not available. Proceeding without file lock (dev environment).")
-        except (BlockingIOError, PermissionError):
-            # Lock acquired by another process
+# Start scheduler only in the main reloader thread to avoid dual tasks
+if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    lock_file_path = os.path.join(base_dir, 'scheduler.lock')
+    should_start = True
+    try:
+        import fcntl
+        global _scheduler_lock_file
+        _scheduler_lock_file = open(lock_file_path, 'w')
+        fcntl.lockf(_scheduler_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except ImportError:
+        # Windows or non-UNIX environment, bypass file locking
+        print("[SCHEDULER] fcntl module not available. Proceeding without file lock (dev environment).")
+    except (BlockingIOError, PermissionError):
+        # Lock acquired by another process
+        print("[SCHEDULER] Another process holds the scheduler lock. Skipping scheduler startup in this process.")
+        should_start = False
+    except OSError as e:
+        import errno
+        if hasattr(e, 'errno') and e.errno in (errno.EAGAIN, errno.EACCES):
             print("[SCHEDULER] Another process holds the scheduler lock. Skipping scheduler startup in this process.")
             should_start = False
-        except Exception as e:
+        else:
             print(f"[SCHEDULER WARNING] Failed to acquire file lock: {e}. Starting scheduler anyway.")
-        
-        if should_start:
-            scheduler.add_job(func=run_expiry_alerts_check, trigger="interval", days=1)
-            scheduler.start()
-            print("[SCHEDULER] APScheduler started successfully for local dev.")
-
-@app.errorhandler(500)
-def handle_500_error(e):
-    import traceback
-    tb_str = traceback.format_exc()
-    print(f"[ERROR 500 DEBUG TRACEBACK]\n{tb_str}")
+    except Exception as e:
+        print(f"[SCHEDULER WARNING] Failed to acquire file lock: {e}. Starting scheduler anyway.")
     
-    # Securely show the error if requested in the URL or configured in the environment
-    if request.args.get('debug_err') == 'true' or (request.referrer and 'debug_err=true' in request.referrer) or os.environ.get('SHOW_DEBUG_ERROR') == 'true':
-        return f"""
-        <html>
-            <head><title>500 Internal Server Error (Debug Mode)</title></head>
-            <body style="font-family: monospace; padding: 20px; background-color: #fce8e6; color: #a51b00;">
-                <h2>500 Internal Server Error - Traceback Exception</h2>
-                <hr/>
-                <pre style="white-space: pre-wrap; font-size: 14px;">{tb_str}</pre>
-            </body>
-        </html>
-        """, 500
-    
-    return "<h3>Internal Server Error</h3><p>The server encountered an internal error and was unable to complete your request. Please check the logs.</p>", 500
+    if should_start:
+        scheduler.add_job(func=run_expiry_alerts_check, trigger="interval", days=1)
+        scheduler.start()
+        print("[SCHEDULER] APScheduler started successfully.")
 
 if __name__ == '__main__':
     app.run(debug=True)

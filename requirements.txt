@@ -1,6 +1,8 @@
 Flask
-pymysql
+flask-mysqldb
+mysqlclient
 qrcode
-Pillow
+pillow
+apscheduler
 requests
 python-dotenv
