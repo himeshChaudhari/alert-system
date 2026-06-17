@@ -3,31 +3,57 @@
 {% block title %}Login - ExpiryAlert{% endblock %}
 
 {% block content %}
-<div class="auth-container">
-    <div class="auth-logo">
-        <i class="fa-solid fa-lock"></i> Account Login
-    </div>
-    
-    <div class="card">
-        <form method="POST" action="{{ url_for('login') }}">
-            <div class="form-group">
-                <label for="email">Email Address</label>
-                <input type="email" id="email" name="email" class="form-control" placeholder="name@retail.com" required autocomplete="email">
+<!-- Skeleton Container -->
+<div class="skeleton-wrapper" aria-busy="true" aria-live="polite">
+    <div class="auth-container">
+        <div class="auth-logo">
+            <div class="skeleton-title skeleton-shimmer" style="width: 150px; margin: 0 auto; height: 30px;"></div>
+        </div>
+        <div class="skeleton-card" style="height: 270px; display: flex; flex-direction: column; gap: 1.25rem;">
+            <div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 30%; height: 16px; margin-bottom: 6px;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="height: 38px; width: 100%; border-radius: var(--radius-sm); margin-bottom: 0;"></div>
             </div>
-            
-            <div class="form-group" style="margin-bottom: 1.75rem;">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+            <div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 30%; height: 16px; margin-bottom: 6px;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="height: 38px; width: 100%; border-radius: var(--radius-sm); margin-bottom: 0;"></div>
             </div>
-            
-            <button type="submit" class="btn btn-primary btn-block">
-                <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
-            </button>
-        </form>
+            <div class="skeleton-button skeleton-shimmer" style="height: 42px; width: 100%; border-radius: var(--radius-sm); margin-top: auto;"></div>
+        </div>
+        <div class="auth-footer">
+            <div class="skeleton-text skeleton-shimmer" style="width: 60%; margin: 0 auto; height: 16px;"></div>
+        </div>
     </div>
-    
-    <div class="auth-footer">
-        Don't have an account? <a href="{{ url_for('register') }}">Create customer account</a>
+</div>
+
+<!-- Actual Content Container -->
+<div class="content-wrapper">
+    <div class="auth-container">
+        <div class="auth-logo">
+            <i class="fa-solid fa-lock"></i> Account Login
+        </div>
+        
+        <div class="card">
+            <form method="POST" action="{{ url_for('login') }}">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" name="email" class="form-control" placeholder="name@retail.com" required autocomplete="email">
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 1.75rem;">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required autocomplete="current-password">
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+                </button>
+            </form>
+        </div>
+        
+        <div class="auth-footer">
+            Don't have an account? <a href="{{ url_for('register') }}">Create customer account</a>
+        </div>
     </div>
 </div>
 {% endblock %}

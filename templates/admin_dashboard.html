@@ -3,277 +3,368 @@
 {% block title %}Admin Analytics Dashboard - ExpiryAlert{% endblock %}
 
 {% block content %}
-<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
-    <div>
-        <h1>Executive Dashboard</h1>
-        <p class="subtitle" style="margin-bottom: 0;">Store analytics, revenue tracking, and expiry monitoring.</p>
-    </div>
-    
-    <!-- Manual Action Trigger (for local validation) -->
-    <form action="{{ url_for('admin_trigger_scheduler') }}" method="POST" style="margin: 0;">
-        <button type="submit" class="btn btn-secondary">
-            <i class="fa-solid fa-clock-rotate-left"></i> Run Daily Alert Job Now
-        </button>
-    </form>
-</div>
-
-<!-- Revenue & Sales Metrics -->
-<div class="grid-admin-summary">
-    <div class="card stat-card">
-        <div class="stat-icon success">
-            <i class="fa-solid fa-indian-rupee-sign"></i>
-        </div>
+<!-- Skeleton Container -->
+<div class="skeleton-wrapper" aria-busy="true" aria-live="polite">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
         <div>
-            <div class="stat-value" style="color: var(--success);">₹{{ "%.2f"|format(total_revenue) }}</div>
-            <div class="stat-label">Total Revenue</div>
+            <div class="skeleton-title skeleton-shimmer" style="width: 250px; height: 32px;"></div>
+            <div class="skeleton-text skeleton-shimmer" style="width: 350px; height: 16px;"></div>
         </div>
+        <div class="skeleton-button skeleton-shimmer" style="width: 180px; height: 42px;"></div>
     </div>
     
-    <div class="card stat-card">
-        <div class="stat-icon primary">
-            <i class="fa-solid fa-calendar-day"></i>
-        </div>
-        <div>
-            <div class="stat-value">₹{{ "%.2f"|format(today_sales) }}</div>
-            <div class="stat-label">Today's Sales</div>
-        </div>
-    </div>
-    
-    <div class="card stat-card">
-        <div class="stat-icon warning">
-            <i class="fa-solid fa-calendar-week"></i>
-        </div>
-        <div>
-            <div class="stat-value">₹{{ "%.2f"|format(monthly_sales) }}</div>
-            <div class="stat-label">This Month</div>
-        </div>
-    </div>
-    
-    <div class="card stat-card">
-        <div class="stat-icon primary">
-            <i class="fa-solid fa-file-invoice"></i>
-        </div>
-        <div>
-            <div class="stat-value">{{ total_bills }}</div>
-            <div class="stat-label">Total Bills</div>
-        </div>
-    </div>
-</div>
-
-<!-- Key Performance Metrics Grid -->
-<div class="grid-admin-summary">
-    <div class="card stat-card">
-        <div class="stat-icon primary">
-            <i class="fa-solid fa-cubes"></i>
-        </div>
-        <div>
-            <div class="stat-value">{{ total_products }}</div>
-            <div class="stat-label">Total Registered Items</div>
-        </div>
-    </div>
-    
-    <div class="card stat-card">
-        <div class="stat-icon success">
-            <i class="fa-solid fa-receipt"></i>
-        </div>
-        <div>
-            <div class="stat-value">{{ total_purchases }}</div>
-            <div class="stat-label">Customer Purchases</div>
-        </div>
-    </div>
-    
-    <div class="card stat-card">
-        <div class="stat-icon warning">
-            <i class="fa-solid fa-bell"></i>
-        </div>
-        <div>
-            <div class="stat-value">{{ total_alerts }}</div>
-            <div class="stat-label">Alerts Generated</div>
-        </div>
-    </div>
-</div>
-
-<!-- Charts Row: Sales & Alerts -->
-<div class="grid-2" style="margin-bottom: 2rem;">
-    <!-- Daily Sales Chart -->
-    <div class="card">
-        <h3 class="card-title">
-            <i class="fa-solid fa-chart-bar" style="color: var(--success);"></i>
-            Daily Sales Revenue (₹)
-        </h3>
-        <div style="position: relative; height: 300px; width: 100%;">
-            <canvas id="salesChart"></canvas>
-        </div>
-    </div>
-    
-    <!-- Alerts Chart Panel -->
-    <div class="card">
-        <h3 class="card-title">
-            <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i>
-            Daily Alert Distribution
-        </h3>
-        <div style="position: relative; height: 300px; width: 100%;">
-            <canvas id="alertsChart"></canvas>
-        </div>
-    </div>
-</div>
-
-<!-- Top Products & Near Expiry Row -->
-<div class="grid-2" style="margin-bottom: 2rem;">
-    <!-- Top Selling Products -->
-    <div class="card" style="display: flex; flex-direction: column;">
-        <h3 class="card-title">
-            <i class="fa-solid fa-ranking-star" style="color: var(--warning);"></i>
-            Top Selling Products
-        </h3>
-        
-        <div style="overflow-y: auto; flex: 1; max-height: 300px;">
-            {% if top_products %}
-                <div class="table-wrapper" style="border: none; margin-top: 0;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>#</th>
-                                <th>Product</th>
-                                <th style="text-align: center;">Qty Sold</th>
-                                <th style="text-align: right;">Revenue</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in top_products %}
-                                <tr>
-                                    <td>
-                                        {% if loop.index == 1 %}
-                                            <span style="color: #fbbf24; font-weight: 700;">🥇</span>
-                                        {% elif loop.index == 2 %}
-                                            <span style="color: #9ca3af; font-weight: 700;">🥈</span>
-                                        {% elif loop.index == 3 %}
-                                            <span style="color: #cd7f32; font-weight: 700;">🥉</span>
-                                        {% else %}
-                                            <span style="color: var(--text-secondary);">{{ loop.index }}</span>
-                                        {% endif %}
-                                    </td>
-                                    <td><strong>{{ p.name }}</strong></td>
-                                    <td style="text-align: center;">
-                                        <span class="badge success">{{ p.total_qty }}</span>
-                                    </td>
-                                    <td style="text-align: right; font-weight: 600; color: var(--success); font-family: monospace;">
-                                        ₹{{ "%.2f"|format(p.total_revenue) }}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
-                    <i class="fa-solid fa-chart-simple" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                    <p>No sales data yet.</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-    
-    <!-- Near Expiry Alert Inventory Panel -->
-    <div class="card" style="display: flex; flex-direction: column;">
-        <h3 class="card-title">
-            <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning);"></i>
-            Near-Expiry Inventory (Next 7 Days)
-        </h3>
-        
-        <div style="overflow-y: auto; flex: 1; max-height: 300px;">
-            {% if near_expiry_products %}
-                <div class="table-wrapper" style="border: none; margin-top: 0;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Product</th>
-                                <th>Expiry Date</th>
-                                <th>Days Left</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for p in near_expiry_products %}
-                                <tr>
-                                    <td><strong>{{ p.name }}</strong></td>
-                                    <td><span style="font-family: monospace;">{{ p.expiry_date }}</span></td>
-                                    <td>
-                                        {% if p.days_remaining <= 1 %}
-                                            <span class="badge danger">{{ p.days_remaining }} day(s)</span>
-                                        {% elif p.days_remaining <= 3 %}
-                                            <span class="badge warning">{{ p.days_remaining }} day(s)</span>
-                                        {% else %}
-                                            <span class="badge success">{{ p.days_remaining }} day(s)</span>
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
-                </div>
-            {% else %}
-                <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
-                    <i class="fa-solid fa-check-double" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--success); opacity: 0.5;"></i>
-                    <p>No products expiring in the next 7 days.</p>
-                </div>
-            {% endif %}
-        </div>
-    </div>
-</div>
-
-<!-- Alerts Communication Log -->
-<div class="card">
-    <h3 class="card-title">
-        <i class="fa-solid fa-list-check" style="color: var(--primary);"></i>
-        Sent Notification History (Alert Log)
-    </h3>
-    
-    <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
-        {% if alert_logs %}
-            <table>
-                <thead>
-                    <tr>
-                        <th>ID</th>
-                        <th>Sent Date</th>
-                        <th>Customer</th>
-                        <th>Product Details</th>
-                        <th>Interval</th>
-                        <th>Recipient</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for log in alert_logs %}
-                        <tr>
-                            <td>#{{ log.id }}</td>
-                            <td><span style="font-family: monospace;">{{ log.alert_sent_date }}</span></td>
-                            <td>
-                                <div><strong>{{ log.customer_name }}</strong></div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ log.customer_email }}</div>
-                            </td>
-                            <td>
-                                <div><strong>{{ log.product_name }}</strong></div>
-                                <div style="font-size: 0.8rem; color: var(--text-secondary);">Expires: {{ log.expiry_date }}</div>
-                            </td>
-                            <td>
-                                <span class="badge {% if log.days_before_expiry == 1 %}danger{% elif log.days_before_expiry == 3 %}warning{% else %}success{% endif %}">
-                                    {{ log.days_before_expiry }} Day(s)
-                                </span>
-                            </td>
-                            <td>
-                                <span style="font-size: 0.85rem; font-weight: 500; text-transform: capitalize; background: var(--light-green); color: var(--primary-hover); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(156,203,59,0.25);">
-                                    {{ log.recipient }}
-                                </span>
-                            </td>
-                        </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        {% else %}
-            <div style="text-align: center; padding: 4rem 0; color: var(--text-secondary);">
-                <i class="fa-regular fa-bell" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.4;"></i>
-                <p>No alert communication records found.</p>
+    <!-- Metrics Grid Skeletons -->
+    <div class="grid-admin-summary" style="margin-bottom: 2rem;">
+        {% for i in range(4) %}
+        <div class="skeleton-card" style="display: flex; align-items: center; gap: 1.5rem; height: 95px;">
+            <div class="skeleton-circle skeleton-shimmer" style="width: 48px; height: 48px; flex-shrink: 0;"></div>
+            <div style="flex-grow: 1;">
+                <div class="skeleton-text skeleton-shimmer" style="width: 70%; height: 24px; margin-bottom: 8px;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 50%; height: 14px; margin-bottom: 0;"></div>
             </div>
-        {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div class="grid-admin-summary" style="margin-bottom: 2rem;">
+        {% for i in range(3) %}
+        <div class="skeleton-card" style="display: flex; align-items: center; gap: 1.5rem; height: 95px;">
+            <div class="skeleton-circle skeleton-shimmer" style="width: 48px; height: 48px; flex-shrink: 0;"></div>
+            <div style="flex-grow: 1;">
+                <div class="skeleton-text skeleton-shimmer" style="width: 70%; height: 24px; margin-bottom: 8px;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 50%; height: 14px; margin-bottom: 0;"></div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Charts Skeletons -->
+    <div class="grid-2" style="margin-bottom: 2rem;">
+        {% for i in range(2) %}
+        <div class="skeleton-card" style="height: 380px; display: flex; flex-direction: column; gap: 1.5rem;">
+            <div class="skeleton-title skeleton-shimmer" style="width: 50%; height: 20px;"></div>
+            <div class="skeleton-chart-box skeleton-shimmer" style="flex: 1; border-radius: var(--radius-md);"></div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Table Skeletons Row -->
+    <div class="grid-2" style="margin-bottom: 2rem;">
+        {% for i in range(2) %}
+        <div class="skeleton-card" style="height: 380px; display: flex; flex-direction: column; gap: 1.25rem;">
+            <div class="skeleton-title skeleton-shimmer" style="width: 60%; height: 20px;"></div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">
+                    <div class="skeleton-text skeleton-shimmer" style="width: 40%; height: 16px; margin-bottom: 0;"></div>
+                    <div class="skeleton-text skeleton-shimmer" style="width: 20%; height: 16px; margin-bottom: 0;"></div>
+                </div>
+                {% for row in range(4) %}
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <div class="skeleton-text skeleton-shimmer" style="width: 50%; height: 14px; margin-bottom: 0;"></div>
+                    <div class="skeleton-text skeleton-shimmer" style="width: 15%; height: 14px; margin-bottom: 0;"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Table Skeleton Large -->
+    <div class="skeleton-card" style="height: 480px; display: flex; flex-direction: column; gap: 1.25rem;">
+        <div class="skeleton-title skeleton-shimmer" style="width: 40%; height: 20px;"></div>
+        <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">
+                <div class="skeleton-text skeleton-shimmer" style="width: 10%; height: 16px; margin-bottom: 0;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 20%; height: 16px; margin-bottom: 0;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 40%; height: 16px; margin-bottom: 0;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 15%; height: 16px; margin-bottom: 0;"></div>
+            </div>
+            {% for row in range(5) %}
+            <div style="display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--border-color);">
+                <div class="skeleton-text skeleton-shimmer" style="width: 8%; height: 14px; margin-bottom: 0;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 18%; height: 14px; margin-bottom: 0;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 38%; height: 14px; margin-bottom: 0;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 12%; height: 14px; margin-bottom: 0;"></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<!-- Actual Content Container -->
+<div class="content-wrapper">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1>Executive Dashboard</h1>
+            <p class="subtitle" style="margin-bottom: 0;">Store analytics, revenue tracking, and expiry monitoring.</p>
+        </div>
+        
+        <!-- Manual Action Trigger (for local validation) -->
+        <form action="{{ url_for('admin_trigger_scheduler') }}" method="POST" style="margin: 0;">
+            <button type="submit" class="btn btn-secondary">
+                <i class="fa-solid fa-clock-rotate-left"></i> Run Daily Alert Job Now
+            </button>
+        </form>
+    </div>
+    
+    <!-- Revenue & Sales Metrics -->
+    <div class="grid-admin-summary">
+        <div class="card stat-card">
+            <div class="stat-icon success">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+            </div>
+            <div>
+                <div class="stat-value" style="color: var(--success);">₹{{ "%.2f"|format(total_revenue) }}</div>
+                <div class="stat-label">Total Revenue</div>
+            </div>
+        </div>
+        
+        <div class="card stat-card">
+            <div class="stat-icon primary">
+                <i class="fa-solid fa-calendar-day"></i>
+            </div>
+            <div>
+                <div class="stat-value">₹{{ "%.2f"|format(today_sales) }}</div>
+                <div class="stat-label">Today's Sales</div>
+            </div>
+        </div>
+        
+        <div class="card stat-card">
+            <div class="stat-icon warning">
+                <i class="fa-solid fa-calendar-week"></i>
+            </div>
+            <div>
+                <div class="stat-value">₹{{ "%.2f"|format(monthly_sales) }}</div>
+                <div class="stat-label">This Month</div>
+            </div>
+        </div>
+        
+        <div class="card stat-card">
+            <div class="stat-icon primary">
+                <i class="fa-solid fa-file-invoice"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total_bills }}</div>
+                <div class="stat-label">Total Bills</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Key Performance Metrics Grid -->
+    <div class="grid-admin-summary">
+        <div class="card stat-card">
+            <div class="stat-icon primary">
+                <i class="fa-solid fa-cubes"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total_products }}</div>
+                <div class="stat-label">Total Registered Items</div>
+            </div>
+        </div>
+        
+        <div class="card stat-card">
+            <div class="stat-icon success">
+                <i class="fa-solid fa-receipt"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total_purchases }}</div>
+                <div class="stat-label">Customer Purchases</div>
+            </div>
+        </div>
+        
+        <div class="card stat-card">
+            <div class="stat-icon warning">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+            <div>
+                <div class="stat-value">{{ total_alerts }}</div>
+                <div class="stat-label">Alerts Generated</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts Row: Sales & Alerts -->
+    <div class="grid-2" style="margin-bottom: 2rem;">
+        <!-- Daily Sales Chart -->
+        <div class="card">
+            <h3 class="card-title">
+                <i class="fa-solid fa-chart-bar" style="color: var(--success);"></i>
+                Daily Sales Revenue (₹)
+            </h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Alerts Chart Panel -->
+        <div class="card">
+            <h3 class="card-title">
+                <i class="fa-solid fa-chart-line" style="color: var(--primary);"></i>
+                Daily Alert Distribution
+            </h3>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="alertsChart"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Top Products & Near Expiry Row -->
+    <div class="grid-2" style="margin-bottom: 2rem;">
+        <!-- Top Selling Products -->
+        <div class="card" style="display: flex; flex-direction: column;">
+            <h3 class="card-title">
+                <i class="fa-solid fa-ranking-star" style="color: var(--warning);"></i>
+                Top Selling Products
+            </h3>
+            
+            <div style="overflow-y: auto; flex: 1; max-height: 300px;">
+                {% if top_products %}
+                    <div class="table-wrapper" style="border: none; margin-top: 0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Product</th>
+                                    <th style="text-align: center;">Qty Sold</th>
+                                    <th style="text-align: right;">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in top_products %}
+                                    <tr>
+                                        <td>
+                                            {% if loop.index == 1 %}
+                                                <span style="color: #fbbf24; font-weight: 700;">🥇</span>
+                                            {% elif loop.index == 2 %}
+                                                <span style="color: #9ca3af; font-weight: 700;">🥈</span>
+                                            {% elif loop.index == 3 %}
+                                                <span style="color: #cd7f32; font-weight: 700;">🥉</span>
+                                            {% else %}
+                                                <span style="color: var(--text-secondary);">{{ loop.index }}</span>
+                                            {% endif %}
+                                        </td>
+                                        <td><strong>{{ p.name }}</strong></td>
+                                        <td style="text-align: center;">
+                                            <span class="badge success">{{ p.total_qty }}</span>
+                                        </td>
+                                        <td style="text-align: right; font-weight: 600; color: var(--success); font-family: monospace;">
+                                            ₹{{ "%.2f"|format(p.total_revenue) }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+                        <i class="fa-solid fa-chart-simple" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p>No sales data yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Near Expiry Alert Inventory Panel -->
+        <div class="card" style="display: flex; flex-direction: column;">
+            <h3 class="card-title">
+                <i class="fa-solid fa-triangle-exclamation" style="color: var(--warning);"></i>
+                Near-Expiry Inventory (Next 7 Days)
+            </h3>
+            
+            <div style="overflow-y: auto; flex: 1; max-height: 300px;">
+                {% if near_expiry_products %}
+                    <div class="table-wrapper" style="border: none; margin-top: 0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Expiry Date</th>
+                                    <th>Days Left</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in near_expiry_products %}
+                                    <tr>
+                                        <td><strong>{{ p.name }}</strong></td>
+                                        <td><span style="font-family: monospace;">{{ p.expiry_date }}</span></td>
+                                        <td>
+                                            {% if p.days_remaining <= 1 %}
+                                                <span class="badge danger">{{ p.days_remaining }} day(s)</span>
+                                            {% elif p.days_remaining <= 3 %}
+                                                <span class="badge warning">{{ p.days_remaining }} day(s)</span>
+                                            {% else %}
+                                                <span class="badge success">{{ p.days_remaining }} day(s)</span>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+                        <i class="fa-solid fa-check-double" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--success); opacity: 0.5;"></i>
+                        <p>No products expiring in the next 7 days.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Alerts Communication Log -->
+    <div class="card">
+        <h3 class="card-title">
+            <i class="fa-solid fa-list-check" style="color: var(--primary);"></i>
+            Sent Notification History (Alert Log)
+        </h3>
+        
+        <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
+            {% if alert_logs %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Sent Date</th>
+                            <th>Customer</th>
+                            <th>Product Details</th>
+                            <th>Interval</th>
+                            <th>Recipient</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for log in alert_logs %}
+                            <tr>
+                                <td>#{{ log.id }}</td>
+                                <td><span style="font-family: monospace;">{{ log.alert_sent_date }}</span></td>
+                                <td>
+                                    <div><strong>{{ log.customer_name }}</strong></div>
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ log.customer_email }}</div>
+                                </td>
+                                <td>
+                                    <div><strong>{{ log.product_name }}</strong></div>
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Expires: {{ log.expiry_date }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge {% if log.days_before_expiry == 1 %}danger{% elif log.days_before_expiry == 3 %}warning{% else %}success{% endif %}">
+                                        {{ log.days_before_expiry }} Day(s)
+                                    </span>
+                                </td>
+                                <td>
+                                    <span style="font-size: 0.85rem; font-weight: 500; text-transform: capitalize; background: var(--light-green); color: var(--primary-hover); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(156,203,59,0.25);">
+                                        {{ log.recipient }}
+                                    </span>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div style="text-align: center; padding: 4rem 0; color: var(--text-secondary);">
+                    <i class="fa-regular fa-bell" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.4;"></i>
+                    <p>No alert communication records found.</p>
+                </div>
+            {% endif %}
+        </div>
     </div>
 </div>
 {% endblock %}
