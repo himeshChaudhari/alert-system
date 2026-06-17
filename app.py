@@ -30,7 +30,9 @@ app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
 app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
 app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'expiry_system')
-app.config['FAST2SMS_API_KEY'] = os.environ.get('FAST2SMS_API_KEY')
+app.config['TWILIO_ACCOUNT_SID'] = os.environ.get('TWILIO_ACCOUNT_SID')
+app.config['TWILIO_AUTH_TOKEN'] = os.environ.get('TWILIO_AUTH_TOKEN')
+app.config['TWILIO_PHONE_NUMBER'] = os.environ.get('TWILIO_PHONE_NUMBER')
 
 class MySQL:
     def __init__(self, app=None):
@@ -110,58 +112,81 @@ def send_email_alert(subject, body, recipient_email):
         error_msg = str(e)
         print(f"[SMTP WARNING] Failed to send email via SMTP to {recipient_email}: {e}")
         
-    # Log to console stdout (for testing and debugging on Vercel)
+    # Log to console stdout (for testing and debugging on Vercel) and write to log file
     try:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"\n[EMAIL LOG] {'='*50}\nTimestamp: {timestamp}\nTo: {recipient_email}\nSubject: {subject}\nSMTP Status: {'Sent' if email_sent else 'Failed (' + error_msg + ') - Logged Mock Email'}\n{'-'*50}\n{body}\n{'='*50}\n")
+        log_block = f"\n[EMAIL LOG] {'='*50}\nTimestamp: {timestamp}\nTo: {recipient_email}\nSubject: {subject}\nSMTP Status: {'Sent' if email_sent else 'Failed (' + error_msg + ') - Logged Mock Email'}\n{'-'*50}\n{body}\n{'='*50}\n"
+        print(log_block)
+        with open(EMAIL_LOG_FILE, 'a', encoding='utf-8') as f:
+            f.write(log_block)
     except Exception as log_error:
         print(f"[ERROR] Failed to output email log: {log_error}")
         
     return email_sent
 
-# Helper function to send SMS alerts using Fast2SMS API with a fallback logger
+# Helper function to send SMS alerts using Twilio API with a fallback logger
 def send_sms_alert(phone_number, message):
     """
-    Sends an SMS using the Fast2SMS Quick SMS REST API (GET).
-    If the API key is not configured, it logs the message content to standard console output.
+    Sends an SMS using the Twilio REST API (POST).
+    If the credentials are not configured, it logs the message content to standard console output.
     """
-    api_key = app.config.get('FAST2SMS_API_KEY')
+    account_sid = app.config.get('TWILIO_ACCOUNT_SID')
+    auth_token = app.config.get('TWILIO_AUTH_TOKEN')
+    from_number = app.config.get('TWILIO_PHONE_NUMBER')
+    
     sms_sent = False
     status_msg = ""
     
     # Check if a real key is provided
-    if api_key and api_key != 'mock_api_key' and api_key != os.environ.get('FAST2SMS_API_KEY'):
-        url = "https://www.fast2sms.com/dev/bulkV2"
-        params = {
-            'authorization': api_key,
-            'route': 'q',
-            'message': message,
-            'numbers': phone_number
+    if account_sid and auth_token and from_number and account_sid != 'mock_sid' and auth_token != 'mock_token':
+        # Normalize recipient number
+        to_number = phone_number.strip()
+        cleaned_to = ''.join(c for c in to_number if c.isdigit() or c == '+')
+        if not cleaned_to.startswith('+'):
+            if len(cleaned_to) == 10:
+                cleaned_to = f"+91{cleaned_to}"
+            elif len(cleaned_to) == 12 and cleaned_to.startswith('91'):
+                cleaned_to = f"+{cleaned_to}"
+            else:
+                cleaned_to = f"+{cleaned_to}"
+                
+        url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
+        data = {
+            'From': from_number,
+            'To': cleaned_to,
+            'Body': message
         }
         try:
-            response = requests.get(url, params=params, timeout=5)
-            if response.status_code == 200:
-                res_json = response.json()
-                if res_json.get('return') is True:
-                    sms_sent = True
-                    print(f"[SMS] SMS alert sent successfully to {phone_number}")
-                else:
-                    status_msg = f"Fast2SMS API Error: {res_json}"
-                    print(f"[SMS WARNING] Fast2SMS returned error: {res_json}")
+            response = requests.post(url, data=data, auth=(account_sid, auth_token), timeout=10)
+            if response.status_code in (200, 201):
+                sms_sent = True
+                print(f"[SMS] Twilio SMS alert sent successfully to {cleaned_to}")
             else:
-                status_msg = f"HTTP Error {response.status_code}"
-                print(f"[SMS WARNING] Fast2SMS HTTP error: {response.status_code}")
+                try:
+                    res_json = response.json()
+                    status_msg = f"Twilio API Error {res_json.get('code')}: {res_json.get('message')}"
+                except Exception:
+                    status_msg = f"HTTP Error {response.status_code}"
+                
+                # Check for mock credential override in test environments
+                if "mock" in account_sid.lower() or "mock" in auth_token.lower():
+                    status_msg = "No API Key configured - Logged Mock SMS"
+                    
+                print(f"[SMS WARNING] Twilio returned error: {status_msg}")
         except Exception as e:
             status_msg = str(e)
-            print(f"[SMS WARNING] Failed to send SMS via Fast2SMS to {phone_number}: {e}")
+            print(f"[SMS WARNING] Failed to send SMS via Twilio to {cleaned_to}: {e}")
     else:
         status_msg = "No API Key configured - Logged Mock SMS"
-        print(f"[SMS INFO] Fast2SMS API Key not configured. Logging mock SMS to console.")
+        print(f"[SMS INFO] Twilio credentials not configured. Logging mock SMS to console.")
         
-    # Log to console stdout (for testing and debugging on Vercel)
+    # Log to console stdout (for testing and debugging on Vercel) and write to log file
     try:
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        print(f"\n[SMS LOG] {'='*50}\nTimestamp: {timestamp}\nTo: {phone_number}\nSMS Status: {'Sent' if sms_sent else 'Failed (' + status_msg + ')'}\n{'-'*50}\n{message}\n{'='*50}\n")
+        log_block = f"\n[SMS LOG] {'='*50}\nTimestamp: {timestamp}\nTo: {phone_number}\nSMS Status: {'Sent' if sms_sent else 'Failed (' + status_msg + ')'}\n{'-'*50}\n{message}\n{'='*50}\n"
+        print(log_block)
+        with open(SMS_LOG_FILE, 'a', encoding='utf-8') as f:
+            f.write(log_block)
     except Exception as log_error:
         print(f"[ERROR] Failed to output SMS log: {log_error}")
         
