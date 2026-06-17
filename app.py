@@ -1030,27 +1030,5 @@ if os.environ.get('VERCEL') != '1':
             scheduler.add_job(func=run_expiry_alerts_check, trigger="interval", days=1)
             scheduler.start()
             print("[SCHEDULER] APScheduler started successfully for local dev.")
-
-@app.errorhandler(500)
-def handle_500_error(e):
-    import traceback
-    tb_str = traceback.format_exc()
-    print(f"[ERROR 500 DEBUG TRACEBACK]\n{tb_str}")
-    
-    # Securely show the error if requested in the URL or configured in the environment
-    if request.args.get('debug_err') == 'true' or (request.referrer and 'debug_err=true' in request.referrer) or os.environ.get('SHOW_DEBUG_ERROR') == 'true':
-        return f"""
-        <html>
-            <head><title>500 Internal Server Error (Debug Mode)</title></head>
-            <body style="font-family: monospace; padding: 20px; background-color: #fce8e6; color: #a51b00;">
-                <h2>500 Internal Server Error - Traceback Exception</h2>
-                <hr/>
-                <pre style="white-space: pre-wrap; font-size: 14px;">{tb_str}</pre>
-            </body>
-        </html>
-        """, 500
-    
-    return "<h3>Internal Server Error</h3><p>The server encountered an internal error and was unable to complete your request. Please check the logs.</p>", 500
-
 if __name__ == '__main__':
     app.run(debug=True)
