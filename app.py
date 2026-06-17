@@ -23,7 +23,7 @@ base_dir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(base_dir, '.env'))
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('secret_key', 'fallback_secret_key_for_vercel')
+app.secret_key = os.environ.get('secret_key', 'fallback_secret_key')
 
 # Database Configuration
 app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
@@ -974,61 +974,37 @@ def run_expiry_alerts_check():
     print(f"[SCHEDULER] Expiry alerts check finished. Total alerts sent/logged: {alerts_count}")
     return alerts_count
 
-@app.route('/api/cron/check-expiry', methods=['GET', 'POST'])
-def cron_check_expiry():
-    """Endpoint for Vercel Cron Jobs to trigger the daily alerts check."""
-    cron_secret = os.environ.get('CRON_SECRET')
-    auth_header = request.headers.get('Authorization')
-    vercel_cron = request.headers.get('X-Vercel-Cron')
-    
-    is_authorized = False
-    if vercel_cron == 'true':
-        is_authorized = True
-    elif cron_secret and auth_header == f"Bearer {cron_secret}":
-        is_authorized = True
-    elif cron_secret and request.args.get('secret') == cron_secret:
-        is_authorized = True
-    elif not cron_secret:
-        # If no secret is configured, allow trigger (useful for testing)
-        is_authorized = True
-        
-    if not is_authorized:
-        return jsonify({'success': False, 'message': 'Unauthorized'}), 401
-        
+# Setup background scheduler
+scheduler = BackgroundScheduler()
+if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+    lock_file_path = os.path.join(base_dir, 'scheduler.lock')
+    should_start = True
     try:
-        alerts_sent = run_expiry_alerts_check()
-        return jsonify({
-            'success': True,
-            'message': f'Cron job run completed. Sent {alerts_sent} alerts.'
-        })
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-# Setup background scheduler (Only for local development, disabled on Vercel)
-# Vercel serverless environment does not support background threads; we use Vercel Cron Jobs.
-if os.environ.get('VERCEL') != '1':
-    scheduler = BackgroundScheduler()
-    if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
-        lock_file_path = os.path.join(base_dir, 'scheduler.lock')
-        should_start = True
-        try:
-            import fcntl
-            global _scheduler_lock_file
-            _scheduler_lock_file = open(lock_file_path, 'w')
-            fcntl.lockf(_scheduler_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except ImportError:
-            # Windows or non-UNIX environment, bypass file locking
-            print("[SCHEDULER] fcntl module not available. Proceeding without file lock (dev environment).")
-        except (BlockingIOError, PermissionError):
-            # Lock acquired by another process
+        import fcntl
+        global _scheduler_lock_file
+        _scheduler_lock_file = open(lock_file_path, 'w')
+        fcntl.lockf(_scheduler_lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except ImportError:
+        # Windows or non-UNIX environment, bypass file locking
+        print("[SCHEDULER] fcntl module not available. Proceeding without file lock (dev environment).")
+    except (BlockingIOError, PermissionError):
+        # Lock acquired by another process
+        print("[SCHEDULER] Another process holds the scheduler lock. Skipping scheduler startup in this process.")
+        should_start = False
+    except OSError as e:
+        import errno
+        if hasattr(e, 'errno') and e.errno in (errno.EAGAIN, errno.EACCES):
             print("[SCHEDULER] Another process holds the scheduler lock. Skipping scheduler startup in this process.")
             should_start = False
-        except Exception as e:
+        else:
             print(f"[SCHEDULER WARNING] Failed to acquire file lock: {e}. Starting scheduler anyway.")
-        
-        if should_start:
-            scheduler.add_job(func=run_expiry_alerts_check, trigger="interval", days=1)
-            scheduler.start()
-            print("[SCHEDULER] APScheduler started successfully for local dev.")
+    except Exception as e:
+        print(f"[SCHEDULER WARNING] Failed to acquire file lock: {e}. Starting scheduler anyway.")
+    
+    if should_start:
+        scheduler.add_job(func=run_expiry_alerts_check, trigger="interval", days=1)
+        scheduler.start()
+        print("[SCHEDULER] APScheduler started successfully.")
+
 if __name__ == '__main__':
     app.run(debug=True)
