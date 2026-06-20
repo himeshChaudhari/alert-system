@@ -30,9 +30,8 @@ app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
 app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
 app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
 app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'expiry_system')
-app.config['TWILIO_ACCOUNT_SID'] = os.environ.get('TWILIO_ACCOUNT_SID')
-app.config['TWILIO_AUTH_TOKEN'] = os.environ.get('TWILIO_AUTH_TOKEN')
-app.config['TWILIO_PHONE_NUMBER'] = os.environ.get('TWILIO_PHONE_NUMBER')
+app.config['TEXTBEE_API_KEY'] = os.environ.get('TEXTBEE_API_KEY')
+app.config['TEXTBEE_DEVICE_ID'] = os.environ.get('TEXTBEE_DEVICE_ID')
 
 class MySQL:
     def __init__(self, app=None):
@@ -124,21 +123,20 @@ def send_email_alert(subject, body, recipient_email):
         
     return email_sent
 
-# Helper function to send SMS alerts using Twilio API with a fallback logger
+# Helper function to send SMS alerts using Textbee API with a fallback logger
 def send_sms_alert(phone_number, message):
     """
-    Sends an SMS using the Twilio REST API (POST).
+    Sends an SMS using the Textbee REST API (POST).
     If the credentials are not configured, it logs the message content to standard console output.
     """
-    account_sid = app.config.get('TWILIO_ACCOUNT_SID')
-    auth_token = app.config.get('TWILIO_AUTH_TOKEN')
-    from_number = app.config.get('TWILIO_PHONE_NUMBER')
+    api_key = app.config.get('TEXTBEE_API_KEY')
+    device_id = app.config.get('TEXTBEE_DEVICE_ID')
     
     sms_sent = False
     status_msg = ""
     
-    # Check if a real key is provided
-    if account_sid and auth_token and from_number and account_sid != 'mock_sid' and auth_token != 'mock_token':
+    # Check if a real key and device id are provided
+    if api_key and device_id and api_key != 'mock_api_key' and device_id != 'mock_device_id':
         # Normalize recipient number
         to_number = phone_number.strip()
         cleaned_to = ''.join(c for c in to_number if c.isdigit() or c == '+')
@@ -150,35 +148,38 @@ def send_sms_alert(phone_number, message):
             else:
                 cleaned_to = f"+{cleaned_to}"
                 
-        url = f"https://api.twilio.com/2010-04-01/Accounts/{account_sid}/Messages.json"
-        data = {
-            'From': from_number,
-            'To': cleaned_to,
-            'Body': message
+        url = f"https://api.textbee.dev/api/v1/gateway/devices/{device_id}/send-sms"
+        payload = {
+            'recipients': [cleaned_to],
+            'message': message
+        }
+        headers = {
+            'x-api-key': api_key,
+            'Content-Type': 'application/json'
         }
         try:
-            response = requests.post(url, data=data, auth=(account_sid, auth_token), timeout=10)
+            response = requests.post(url, json=payload, headers=headers, timeout=10)
             if response.status_code in (200, 201):
                 sms_sent = True
-                print(f"[SMS] Twilio SMS alert sent successfully to {cleaned_to}")
+                print(f"[SMS] Textbee SMS alert sent successfully to {cleaned_to}")
             else:
                 try:
                     res_json = response.json()
-                    status_msg = f"Twilio API Error {res_json.get('code')}: {res_json.get('message')}"
+                    status_msg = f"Textbee API Error: {res_json}"
                 except Exception:
                     status_msg = f"HTTP Error {response.status_code}"
                 
                 # Check for mock credential override in test environments
-                if "mock" in account_sid.lower() or "mock" in auth_token.lower():
+                if "mock" in api_key.lower() or "mock" in device_id.lower():
                     status_msg = "No API Key configured - Logged Mock SMS"
                     
-                print(f"[SMS WARNING] Twilio returned error: {status_msg}")
+                print(f"[SMS WARNING] Textbee returned error: {status_msg}")
         except Exception as e:
             status_msg = str(e)
-            print(f"[SMS WARNING] Failed to send SMS via Twilio to {cleaned_to}: {e}")
+            print(f"[SMS WARNING] Failed to send SMS via Textbee to {cleaned_to}: {e}")
     else:
         status_msg = "No API Key configured - Logged Mock SMS"
-        print(f"[SMS INFO] Twilio credentials not configured. Logging mock SMS to console.")
+        print(f"[SMS INFO] Textbee credentials not configured. Logging mock SMS to console.")
         
     # Log to console stdout (for testing and debugging on Vercel) and write to log file
     try:
