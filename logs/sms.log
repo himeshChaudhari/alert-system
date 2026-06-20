@@ -14,3 +14,11 @@ SMS Status: Failed (No API Key configured - Logged Mock SMS)
 --------------------------------------------------
 Hi SMS Cust 2, your product SMS Alert Test Product expires in 7 day(s). Please consume it soon.
 ==================================================
+
+[SMS LOG] ==================================================
+Timestamp: 2026-06-20 12:06:34
+To: 8975328505
+SMS Status: Sent
+--------------------------------------------------
+Hello Himesh! SMS automation is working.
+==================================================
