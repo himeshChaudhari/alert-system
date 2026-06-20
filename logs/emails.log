@@ -622,3 +622,87 @@ SMTP Status: Sent
                         <p>Thank you for shopping with us!</p>
                         
 ==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-06-17 16:10:37
+To: himeshchaudhari2332@gmail.com
+Subject: Alert: Your product 'Biscuit' is expiring in 3 day(s)!
+SMTP Status: Sent
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Himesh Chaudhari,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Biscuit</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Biscuit</li>
+                            <li>Expiry Date: 2026-06-20</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-06-17 16:16:45
+To: shlokgharat14@gmail.com
+Subject: Alert: Your product 'Biscuit' is expiring in 3 day(s)!
+SMTP Status: Sent
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear shlok,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Biscuit</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Biscuit</li>
+                            <li>Expiry Date: 2026-06-20</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-06-20 11:15:13
+To: test_cust1@example.com
+Subject: Alert: Your product 'SMS Alert Test Product' is expiring in 7 day(s)!
+SMTP Status: Sent
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear SMS Cust 1,</p>
+                        <p>This is an automated alert to notify you that the product <strong>SMS Alert Test Product</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: SMS Alert Test Product</li>
+                            <li>Expiry Date: 2026-06-27</li>
+                            <li>Days remaining: 7 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-06-20 11:15:17
+To: test_cust3@example.com
+Subject: Alert: Your product 'SMS Alert Test Product' is expiring in 7 day(s)!
+SMTP Status: Sent
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear SMS Cust 3,</p>
+                        <p>This is an automated alert to notify you that the product <strong>SMS Alert Test Product</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: SMS Alert Test Product</li>
+                            <li>Expiry Date: 2026-06-27</li>
+                            <li>Days remaining: 7 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
