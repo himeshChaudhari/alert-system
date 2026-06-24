@@ -106,9 +106,14 @@
 
 <!-- Actual Content Wrapper (Fades In) -->
 <div class="content-wrapper">
-    <div style="margin-bottom: 2rem;">
-        <h1>My Product Expiry Dashboard</h1>
-        <p class="subtitle">Keep track of your purchased grocery and retail items' expiry timelines.</p>
+    <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+        <div>
+            <h1>My Product Expiry Dashboard</h1>
+            <p class="subtitle" style="margin-bottom: 0;">Keep track of your purchased grocery and retail items' expiry timelines.</p>
+        </div>
+        <a href="{{ url_for('customer_bills') }}" class="btn btn-secondary">
+            <i class="fa-solid fa-file-invoice-dollar"></i> My Bills &amp; Invoices
+        </a>
     </div>
 
     <div class="grid-2">

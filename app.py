@@ -205,10 +205,13 @@ def login_required(f):
     return decorated_function
 
 def role_required(allowed_roles):
+    roles = list(allowed_roles)
+    if 'admin' in roles and 'super_admin' not in roles:
+        roles.append('super_admin')
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
-            if 'user_role' not in session or session['user_role'] not in allowed_roles:
+            if 'user_role' not in session or session['user_role'] not in roles:
                 flash('Unauthorized access!', 'danger')
                 return redirect(url_for('dashboard_router'))
             return f(*args, **kwargs)
@@ -222,21 +225,14 @@ def index():
         return redirect(url_for('dashboard_router'))
     return redirect(url_for('login'))
 
-@app.route('/test-sms')
-def test_sms():
-    result = send_sms_alert(
-        "8975328505",
-        "Hello Himesh! SMS automation is working."
-    )
-
-    return "SMS Sent!" if result else "SMS Failed!"
-
 @app.route('/dashboard')
 @login_required
 def dashboard_router():
     """Redirects the user to the correct dashboard based on their role."""
     role = session.get('user_role')
-    if role == 'admin':
+    if role == 'super_admin':
+        return redirect(url_for('superadmin_dashboard'))
+    elif role == 'admin':
         return redirect(url_for('admin_dashboard'))
     elif role == 'staff':
         return redirect(url_for('staff_dashboard'))
@@ -260,10 +256,27 @@ def login():
         cur.close()
         
         if user and check_password_hash(user['password'], password):
+            # Check if user account is deactivated (for staff and admin roles)
+            if user['role'] in ['admin', 'staff']:
+                if not user.get('is_active', True):
+                    flash('Your account has been deactivated. Please contact your store administrator.', 'danger')
+                    return render_template('login.html')
+                    
+                # Check if store is active
+                if user['store_id']:
+                    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+                    cur.execute("SELECT is_active FROM stores WHERE id = %s", (user['store_id'],))
+                    store = cur.fetchone()
+                    cur.close()
+                    if store and not store['is_active']:
+                        flash('Your store account has been suspended. Contact support.', 'danger')
+                        return render_template('login.html')
+
             session['user_id'] = user['id']
             session['user_name'] = user['name']
             session['user_email'] = user['email']
             session['user_role'] = user['role']
+            session['store_id'] = user['store_id']
             flash(f"Welcome back, {user['name']}!", 'success')
             return redirect(url_for('dashboard_router'))
         else:
@@ -281,11 +294,10 @@ def register():
         email = request.form.get('email')
         phone = request.form.get('phone')
         password = request.form.get('password')
-        role = request.form.get('role', 'customer') # Defaults to customer
         
-        # Admin cannot be registered normally, must be customer or staff
-        if role == 'admin':
-            role = 'customer'
+        # Public registration strictly creates customer accounts
+        role = 'customer'
+        store_id = None
             
         hashed_password = generate_password_hash(password)
         
@@ -298,11 +310,9 @@ def register():
             if existing_user:
                 # If they exist and have NO email, they were auto-created at billing counter
                 if not existing_user['email']:
-                    # Update email, password, name, and role
-                    updated_role = role if existing_user['role'] != 'admin' else 'admin'
                     cur.execute(
-                        "UPDATE users SET name = %s, email = %s, password = %s, role = %s WHERE phone = %s",
-                        (name, email, hashed_password, updated_role, phone)
+                        "UPDATE users SET name = %s, email = %s, password = %s, role = %s, store_id = %s WHERE phone = %s",
+                        (name, email, hashed_password, role, store_id, phone)
                     )
                     mysql.connection.commit()
                     flash('Registration completed successfully! Your billing history has been linked.', 'success')
@@ -318,8 +328,8 @@ def register():
                 return render_template('register.html')
                 
             cur.execute(
-                "INSERT INTO users (name, phone, email, password, role) VALUES (%s, %s, %s, %s, %s)",
-                (name, phone, email, hashed_password, role)
+                "INSERT INTO users (name, phone, email, password, role, store_id) VALUES (%s, %s, %s, %s, %s, %s)",
+                (name, phone, email, hashed_password, role, store_id)
             )
             mysql.connection.commit()
             flash('Registration successful! Please log in.', 'success')
@@ -331,6 +341,229 @@ def register():
             cur.close()
             
     return render_template('register.html')
+
+@app.route('/store/register', methods=['GET', 'POST'])
+def store_register():
+    if 'user_id' in session and session.get('user_role') != 'super_admin':
+        return redirect(url_for('dashboard_router'))
+        
+    if request.method == 'POST':
+        store_name = request.form.get('store_name')
+        store_address = request.form.get('store_address')
+        admin_name = request.form.get('admin_name')
+        admin_email = request.form.get('admin_email')
+        admin_phone = request.form.get('admin_phone')
+        admin_password = request.form.get('admin_password')
+        
+        if not all([store_name, admin_name, admin_email, admin_phone, admin_password]):
+            flash('All fields are required.', 'danger')
+            return render_template('store_register.html')
+            
+        hashed_password = generate_password_hash(admin_password)
+        
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        try:
+            # Check if user with this email already exists
+            cur.execute("SELECT id FROM users WHERE email = %s", (admin_email,))
+            if cur.fetchone():
+                flash('An account with this email address already exists.', 'danger')
+                return render_template('store_register.html')
+                
+            # 1. Insert store
+            cur.execute(
+                "INSERT INTO stores (name, address, owner_email, is_active) VALUES (%s, %s, %s, TRUE)",
+                (store_name, store_address, admin_email)
+            )
+            store_id = cur.lastrowid
+            
+            # 2. Insert admin user
+            cur.execute(
+                "INSERT INTO users (name, phone, email, password, role, store_id) VALUES (%s, %s, %s, %s, 'admin', %s)",
+                (admin_name, admin_phone, admin_email, hashed_password, store_id)
+            )
+            
+            mysql.connection.commit()
+            if session.get('user_role') == 'super_admin':
+                flash(f"Store '{store_name}' and admin account registered successfully!", 'success')
+                return redirect(url_for('superadmin_dashboard'))
+            else:
+                flash('Store and admin account registered successfully! You can now log in.', 'success')
+                return redirect(url_for('login'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'An error occurred: {str(e)}', 'danger')
+        finally:
+            cur.close()
+            
+    return render_template('store_register.html')
+
+@app.route('/admin/register-staff', methods=['GET', 'POST'])
+@login_required
+@role_required(['admin'])
+def register_staff():
+    stores = []
+    # If super_admin, they need a list of stores to assign staff to
+    if session.get('user_role') == 'super_admin':
+        cur_stores = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur_stores.execute("SELECT id, name FROM stores ORDER BY name ASC")
+        stores = cur_stores.fetchall()
+        cur_stores.close()
+
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        password = request.form.get('password')
+        
+        # Decide which store_id to use
+        if session.get('user_role') == 'super_admin':
+            store_id = request.form.get('store_id')
+            if not store_id:
+                flash('Please select a store to assign staff to.', 'danger')
+                return render_template('register_staff.html', stores=stores)
+            store_id = int(store_id)
+        else:
+            store_id = session.get('store_id')
+            
+        if not all([name, email, phone, password, store_id]):
+            flash('All fields are required.', 'danger')
+            return render_template('register_staff.html', stores=stores)
+            
+        hashed_password = generate_password_hash(password)
+        
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        try:
+            # Check if email is already registered
+            cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+            if cur.fetchone():
+                flash('Email already registered.', 'danger')
+                return render_template('register_staff.html', stores=stores)
+                
+            # If user with this phone number already exists, see if it was auto-created
+            cur.execute("SELECT * FROM users WHERE phone = %s", (phone,))
+            existing_user = cur.fetchone()
+            if existing_user:
+                if not existing_user['email']:
+                    cur.execute(
+                        "UPDATE users SET name = %s, email = %s, password = %s, role = 'staff', store_id = %s WHERE phone = %s",
+                        (name, email, hashed_password, store_id, phone)
+                    )
+                    mysql.connection.commit()
+                    flash(f'Staff member {name} registered successfully (billing history linked)!', 'success')
+                    return redirect(url_for('dashboard_router'))
+                else:
+                    flash('This phone number is already registered to another account.', 'danger')
+                    return render_template('register_staff.html', stores=stores)
+                    
+            cur.execute(
+                "INSERT INTO users (name, phone, email, password, role, store_id) VALUES (%s, %s, %s, %s, 'staff', %s)",
+                (name, phone, email, hashed_password, store_id)
+            )
+            mysql.connection.commit()
+            flash(f'Staff member {name} registered successfully!', 'success')
+            return redirect(url_for('dashboard_router'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Registration failed: {e}', 'danger')
+        finally:
+            cur.close()
+            
+    return render_template('register_staff.html', stores=stores)
+
+@app.route('/admin/create-staff', methods=['GET', 'POST'])
+@login_required
+@role_required(['admin'])
+def create_staff():
+    if request.method == 'POST':
+        name = request.form.get('name')
+        email = request.form.get('email')
+        phone = request.form.get('phone')
+        password = request.form.get('password')
+        
+        # Admin sets the initial password explicitly on the form
+        store_id = session.get('store_id')
+        if not store_id:
+            flash('Error: Store context missing. Super admin cannot create store staff directly.', 'danger')
+            return redirect(url_for('dashboard_router'))
+            
+        if not all([name, email, phone, password]):
+            flash('All fields are required.', 'danger')
+            return render_template('create_staff.html')
+            
+        hashed_password = generate_password_hash(password)
+        
+        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        try:
+            # Check if email is already registered
+            cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+            if cur.fetchone():
+                flash('Email already registered.', 'danger')
+                return render_template('create_staff.html')
+                
+            # Check if user with this phone number already exists
+            cur.execute("SELECT * FROM users WHERE phone = %s", (phone,))
+            existing_user = cur.fetchone()
+            if existing_user:
+                if not existing_user['email']:
+                    # Update existing customer placeholder to be a staff member
+                    cur.execute(
+                        "UPDATE users SET name = %s, email = %s, password = %s, role = 'staff', store_id = %s, is_active = TRUE WHERE phone = %s",
+                        (name, email, hashed_password, store_id, phone)
+                    )
+                    mysql.connection.commit()
+                    flash(f'Staff member {name} created successfully (linked billing history)!', 'success')
+                    return redirect(url_for('admin_dashboard'))
+                else:
+                    flash('This phone number is already registered to another account.', 'danger')
+                    return render_template('create_staff.html')
+                    
+            # Insert new staff member
+            cur.execute(
+                "INSERT INTO users (name, phone, email, password, role, store_id, is_active) VALUES (%s, %s, %s, %s, 'staff', %s, TRUE)",
+                (name, phone, email, hashed_password, store_id)
+            )
+            mysql.connection.commit()
+            flash(f'Staff member {name} created successfully!', 'success')
+            return redirect(url_for('admin_dashboard'))
+        except Exception as e:
+            mysql.connection.rollback()
+            flash(f'Failed to create staff member: {e}', 'danger')
+        finally:
+            cur.close()
+            
+    return render_template('create_staff.html')
+
+@app.route('/admin/toggle-staff/<int:staff_id>', methods=['POST'])
+@login_required
+@role_required(['admin'])
+def toggle_staff(staff_id):
+    store_id = session.get('store_id')
+    if not store_id:
+        flash('Unauthorized store action.', 'danger')
+        return redirect(url_for('dashboard_router'))
+        
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        # Verify staff member exists and belongs to the same store
+        cur.execute("SELECT id, name, is_active FROM users WHERE id = %s AND store_id = %s AND role = 'staff'", (staff_id, store_id))
+        staff = cur.fetchone()
+        if not staff:
+            flash('Staff member not found or does not belong to your store.', 'danger')
+            return redirect(url_for('admin_dashboard'))
+            
+        new_status = not staff['is_active']
+        cur.execute("UPDATE users SET is_active = %s WHERE id = %s", (new_status, staff_id))
+        mysql.connection.commit()
+        
+        status_str = "activated" if new_status else "deactivated"
+        flash(f"Staff member '{staff['name']}' has been {status_str}.", 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Failed to update staff status: {e}", 'danger')
+    finally:
+        cur.close()
+        
+    return redirect(url_for('admin_dashboard'))
 
 @app.route('/logout')
 def logout():
@@ -344,8 +577,13 @@ def logout():
 @login_required
 @role_required(['staff', 'admin'])
 def staff_dashboard():
+    store_id = request.args.get('store_id', type=int) if session.get('user_role') == 'super_admin' else session.get('store_id')
+    is_global = (session.get('user_role') == 'super_admin' and store_id is None) or (session.get('user_role') == 'admin' and session.get('store_id') is None)
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT * FROM products ORDER BY id DESC")
+    if is_global:
+        cur.execute("SELECT * FROM products ORDER BY id DESC")
+    else:
+        cur.execute("SELECT * FROM products WHERE store_id = %s ORDER BY id DESC", (store_id,))
     products = cur.fetchall()
     cur.close()
     return render_template('staff_dashboard.html', products=products)
@@ -355,8 +593,13 @@ def staff_dashboard():
 @role_required(['staff', 'admin'])
 def get_product_price(product_id):
     """API endpoint: returns product name & price for the billing cart."""
+    store_id = session.get('store_id')
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT id, name, price_per_pack, stock_quantity, pack_size, unit FROM products WHERE id = %s", (product_id,))
+    is_global = session.get('user_role') == 'super_admin' or (session.get('user_role') == 'admin' and store_id is None)
+    if is_global:
+        cur.execute("SELECT id, name, price_per_pack, stock_quantity, pack_size, unit FROM products WHERE id = %s", (product_id,))
+    else:
+        cur.execute("SELECT id, name, price_per_pack, stock_quantity, pack_size, unit FROM products WHERE id = %s AND store_id = %s", (product_id, store_id))
     product = cur.fetchone()
     cur.close()
     if product:
@@ -378,8 +621,13 @@ def get_product_price(product_id):
 def get_product_qr(product_id):
     """Generates the QR code image on the fly and streams it as a PNG response."""
     import io
+    store_id = session.get('store_id')
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("SELECT qr_code_data FROM products WHERE id = %s", (product_id,))
+    is_global = session.get('user_role') in ['customer', 'super_admin'] or (session.get('user_role') == 'admin' and store_id is None)
+    if is_global:
+        cur.execute("SELECT qr_code_data FROM products WHERE id = %s", (product_id,))
+    else:
+        cur.execute("SELECT qr_code_data FROM products WHERE id = %s AND store_id = %s", (product_id, store_id))
     product = cur.fetchone()
     cur.close()
     
@@ -455,13 +703,18 @@ def register_product():
         return redirect(url_for('staff_dashboard'))
         
     staff_id = session['user_id']
+    store_id = session.get('store_id')
+    
+    if not store_id:
+        flash('Super admin cannot register products directly. Please use a store-specific staff/admin account.', 'danger')
+        return redirect(url_for('staff_dashboard'))
     
     cur = mysql.connection.cursor()
     try:
         # 1. Insert product into DB with price (temporarily without QR code data)
         cur.execute(
-            "INSERT INTO products (name, expiry_date, price_per_pack, stock_quantity, pack_size, unit, qr_code_data, registered_by) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)",
-            (name, expiry_date, price_per_pack, stock_quantity, pack_size, unit, "", staff_id)
+            "INSERT INTO products (name, expiry_date, price_per_pack, stock_quantity, pack_size, unit, qr_code_data, registered_by, store_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            (name, expiry_date, price_per_pack, stock_quantity, pack_size, unit, "", staff_id, store_id)
         )
         product_id = cur.lastrowid
         
@@ -479,6 +732,104 @@ def register_product():
     except Exception as e:
         mysql.connection.rollback()
         flash(f'Error registering product: {e}', 'danger')
+    finally:
+        cur.close()
+        
+    return redirect(url_for('staff_dashboard'))
+
+@app.route('/staff/restock/<int:product_id>', methods=['POST'])
+@login_required
+@role_required(['staff', 'admin'])
+def restock_product(product_id):
+    quantity_str = request.form.get('quantity')
+    expiry_date_str = request.form.get('expiry_date')
+    
+    if not quantity_str or not expiry_date_str:
+        flash('Quantity and expiry date are required!', 'danger')
+        return redirect(url_for('staff_dashboard'))
+        
+    try:
+        quantity = int(quantity_str)
+        if quantity <= 0:
+            flash('Restock quantity must be greater than zero.', 'danger')
+            return redirect(url_for('staff_dashboard'))
+    except (ValueError, TypeError):
+        flash('Invalid quantity value.', 'danger')
+        return redirect(url_for('staff_dashboard'))
+        
+    try:
+        submitted_expiry_date = datetime.datetime.strptime(expiry_date_str, "%Y-%m-%d").date()
+    except ValueError:
+        flash('Invalid expiry date format. Please use YYYY-MM-DD.', 'danger')
+        return redirect(url_for('staff_dashboard'))
+        
+    store_id = session.get('store_id')
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        is_global = session.get('user_role') == 'super_admin' or (session.get('user_role') == 'admin' and store_id is None)
+        if is_global:
+            cur.execute("""
+                SELECT id, name, price_per_pack, pack_size, unit, stock_quantity, expiry_date, store_id 
+                FROM products WHERE id = %s
+            """, (product_id,))
+        else:
+            cur.execute("""
+                SELECT id, name, price_per_pack, pack_size, unit, stock_quantity, expiry_date, store_id 
+                FROM products WHERE id = %s AND store_id = %s
+            """, (product_id, store_id))
+        product = cur.fetchone()
+        
+        if not product:
+            flash('Product not found or access denied.', 'danger')
+            return redirect(url_for('staff_dashboard'))
+            
+        db_expiry_date = product['expiry_date']
+        
+        # Check if the submitted expiry date matches the database expiry date
+        if db_expiry_date == submitted_expiry_date:
+            # Match: simply increment stock_quantity on the existing row
+            new_stock = product['stock_quantity'] + quantity
+            cur.execute("UPDATE products SET stock_quantity = %s WHERE id = %s", (new_stock, product_id))
+            mysql.connection.commit()
+            
+            formatted_date = submitted_expiry_date.strftime("%d %B") if submitted_expiry_date else 'N/A'
+            flash(f"Restocked existing batch — new total: {new_stock} units (exp. {formatted_date}).", 'success')
+        else:
+            # Mismatch: create a brand-new product row with the same attributes but new expiry & quantity
+            staff_id = session['user_id']
+            cur.execute("""
+                INSERT INTO products (name, expiry_date, price_per_pack, stock_quantity, pack_size, unit, qr_code_data, registered_by, store_id)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """, (
+                product['name'],
+                submitted_expiry_date,
+                product['price_per_pack'],
+                quantity,
+                product['pack_size'],
+                product['unit'],
+                "",  # temporary qr_code_data
+                staff_id,
+                product['store_id']
+            ))
+            new_product_id = cur.lastrowid
+            
+            # Generate and save new qr_code_data
+            new_qr_data = f"EXP:{new_product_id}:{expiry_date_str}"
+            cur.execute("UPDATE products SET qr_code_data = %s WHERE id = %s", (new_qr_data, new_product_id))
+            mysql.connection.commit()
+            
+            old_expiry_formatted = db_expiry_date.strftime("%d %B") if db_expiry_date else 'N/A'
+            new_expiry_formatted = submitted_expiry_date.strftime("%d %B") if submitted_expiry_date else 'N/A'
+            
+            flash(
+                f"New batch detected — created new product entry with a fresh QR code (exp. {new_expiry_formatted}). "
+                f"Old batch ({product['stock_quantity']} units, exp. {old_expiry_formatted}) remains active until sold out.", 
+                'success'
+            )
+            
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Error restocking product: {e}", 'danger')
     finally:
         cur.close()
         
@@ -579,11 +930,14 @@ def checkout():
         today = datetime.date.today()
         now = datetime.datetime.now()
         staff_id = session['user_id']
+        staff_store_id = session.get('store_id')
+        if not staff_store_id:
+            return jsonify({'success': False, 'message': 'Super admin cannot process checkouts directly. Please use a store-specific account.'})
         
         # Fetch prices and stock for all products in this transaction
         prod_id_list = list(product_quantities.keys())
         format_strings = ','.join(['%s'] * len(prod_id_list))
-        cur.execute(f"SELECT id, name, price_per_pack, stock_quantity FROM products WHERE id IN ({format_strings})", tuple(prod_id_list))
+        cur.execute(f"SELECT id, name, price_per_pack, stock_quantity FROM products WHERE id IN ({format_strings}) AND store_id = %s", tuple(prod_id_list + [staff_store_id]))
         products_data = {row['id']: row for row in cur.fetchall()}
         
         # Validate stock levels and calculate grand total
@@ -604,8 +958,8 @@ def checkout():
         
         # 1. Create the bill record
         cur.execute(
-            "INSERT INTO bills (customer_id, staff_id, total_amount, bill_date) VALUES (%s, %s, %s, %s)",
-            (customer_id, staff_id, grand_total, now)
+            "INSERT INTO bills (customer_id, staff_id, total_amount, bill_date, store_id) VALUES (%s, %s, %s, %s, %s)",
+            (customer_id, staff_id, grand_total, now, staff_store_id)
         )
         bill_id = cur.lastrowid
         
@@ -658,43 +1012,100 @@ def checkout():
 @role_required(['staff', 'admin'])
 def billing_history():
     """Shows a list of all bills with customer info, date, total, and item count."""
+    store_id = request.args.get('store_id', type=int) if session.get('user_role') == 'super_admin' else session.get('store_id')
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
-    cur.execute("""
-        SELECT b.id, b.bill_date, b.total_amount,
-               u.name AS customer_name, u.phone AS customer_phone,
-               COUNT(p.id) AS item_count
-        FROM bills b
-        JOIN users u ON b.customer_id = u.id
-        LEFT JOIN purchases p ON p.bill_id = b.id
-        GROUP BY b.id
-        ORDER BY b.id DESC
-    """)
+    is_global = (session.get('user_role') == 'super_admin' and store_id is None) or (session.get('user_role') == 'admin' and session.get('store_id') is None)
+    if is_global:
+        cur.execute("""
+            SELECT b.id, b.bill_date, b.total_amount,
+                   u.name AS customer_name, u.phone AS customer_phone,
+                   COUNT(p.id) AS item_count
+            FROM bills b
+            JOIN users u ON b.customer_id = u.id
+            LEFT JOIN purchases p ON p.bill_id = b.id
+            GROUP BY b.id
+            ORDER BY b.id DESC
+        """)
+    else:
+        cur.execute("""
+            SELECT b.id, b.bill_date, b.total_amount,
+                   u.name AS customer_name, u.phone AS customer_phone,
+                   COUNT(p.id) AS item_count
+            FROM bills b
+            JOIN users u ON b.customer_id = u.id
+            LEFT JOIN purchases p ON p.bill_id = b.id
+            WHERE b.store_id = %s
+            GROUP BY b.id
+            ORDER BY b.id DESC
+        """, (store_id,))
     bills = cur.fetchall()
     cur.close()
     return render_template('billing_history.html', bills=bills)
 
+@app.route('/customer/bills')
+@login_required
+@role_required(['customer'])
+def customer_bills():
+    """Renders a list of bills/transactions belonging to the logged-in customer."""
+    customer_id = session['user_id']
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    cur.execute("""
+        SELECT b.id, b.bill_date, b.total_amount,
+               s.name AS store_name,
+               COUNT(p.id) AS item_count
+        FROM bills b
+        LEFT JOIN stores s ON b.store_id = s.id
+        LEFT JOIN purchases p ON p.bill_id = b.id
+        WHERE b.customer_id = %s
+        GROUP BY b.id
+        ORDER BY b.id DESC
+    """, (customer_id,))
+    bills = cur.fetchall()
+    cur.close()
+    return render_template('customer_bills.html', bills=bills)
+
 @app.route('/staff/bill/<int:bill_id>')
 @login_required
-@role_required(['staff', 'admin'])
+@role_required(['staff', 'admin', 'customer'])
 def view_bill(bill_id):
     """Renders a printable invoice for a given bill."""
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
-    # Fetch bill header
+    # Fetch bill header with store details
     cur.execute("""
-        SELECT b.id, b.bill_date, b.total_amount,
+        SELECT b.id, b.bill_date, b.total_amount, b.customer_id, b.store_id,
                c.name AS customer_name, c.phone AS customer_phone, c.email AS customer_email,
-               s.name AS staff_name
+               s.name AS staff_name, st.name AS store_name, st.address AS store_address
         FROM bills b
         JOIN users c ON b.customer_id = c.id
         JOIN users s ON b.staff_id = s.id
+        LEFT JOIN stores st ON b.store_id = st.id
         WHERE b.id = %s
     """, (bill_id,))
     bill = cur.fetchone()
     
     if not bill:
+        cur.close()
         flash('Bill not found.', 'danger')
+        if session.get('user_role') == 'customer':
+            return redirect(url_for('customer_bills'))
         return redirect(url_for('billing_history'))
+        
+    # Authorization check for customer role
+    if session.get('user_role') == 'customer':
+        if bill['customer_id'] != session.get('user_id'):
+            cur.close()
+            flash('Access denied. You can only view your own bills.', 'danger')
+            return redirect(url_for('customer_bills'))
+    # Authorization check for staff/admin role
+    else:
+        store_id = session.get('store_id')
+        is_global = session.get('user_role') == 'super_admin' or (session.get('user_role') == 'admin' and store_id is None)
+        if not is_global:
+            if bill['store_id'] != store_id:
+                cur.close()
+                flash('Access denied. This bill belongs to another store.', 'danger')
+                return redirect(url_for('billing_history'))
     
     # Fetch line items
     cur.execute("""
@@ -710,61 +1121,321 @@ def view_bill(bill_id):
     
     return render_template('bill_invoice.html', bill=bill, items=items)
 
+@app.route('/staff/write-off/<int:product_id>', methods=['POST'])
+@login_required
+@role_required(['staff', 'admin'])
+def write_off_product(product_id):
+    quantity_str = request.form.get('quantity')
+    reason = request.form.get('reason', 'expired')
+    
+    if not quantity_str:
+        flash('Quantity is required for write-off.', 'danger')
+        if session.get('user_role') == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('staff_dashboard'))
+        
+    try:
+        quantity = int(quantity_str)
+        if quantity <= 0:
+            flash('Quantity must be greater than zero.', 'danger')
+            if session.get('user_role') == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('staff_dashboard'))
+    except (ValueError, TypeError):
+        flash('Invalid quantity value.', 'danger')
+        if session.get('user_role') == 'admin':
+            return redirect(url_for('admin_dashboard'))
+        return redirect(url_for('staff_dashboard'))
+        
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        # Get product and current stock
+        store_id = session.get('store_id')
+        is_global = session.get('user_role') == 'super_admin' or (session.get('user_role') == 'admin' and store_id is None)
+        if is_global:
+            cur.execute("SELECT name, stock_quantity FROM products WHERE id = %s", (product_id,))
+        else:
+            cur.execute("SELECT name, stock_quantity FROM products WHERE id = %s AND store_id = %s", (product_id, store_id))
+        product = cur.fetchone()
+        
+        if not product:
+            flash('Product not found.', 'danger')
+            mysql.connection.rollback()
+            if session.get('user_role') == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('staff_dashboard'))
+            
+        current_stock = product['stock_quantity']
+        if quantity > current_stock:
+            flash(f'Cannot write off {quantity} units. Only {current_stock} units available in stock.', 'danger')
+            mysql.connection.rollback()
+            if session.get('user_role') == 'admin':
+                return redirect(url_for('admin_dashboard'))
+            return redirect(url_for('staff_dashboard'))
+            
+        # Update product stock_quantity
+        if is_global:
+            cur.execute("UPDATE products SET stock_quantity = stock_quantity - %s WHERE id = %s", (quantity, product_id))
+        else:
+            cur.execute("UPDATE products SET stock_quantity = stock_quantity - %s WHERE id = %s AND store_id = %s", (quantity, product_id, store_id))
+        
+        # Log to wastage_log
+        cur.execute(
+            "INSERT INTO wastage_log (product_id, quantity, reason, logged_by) VALUES (%s, %s, %s, %s)",
+            (product_id, quantity, reason, session['user_id'])
+        )
+        
+        mysql.connection.commit()
+        flash(f'Successfully wrote off {quantity} units of "{product["name"]}".', 'success')
+        
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f'Error writing off stock: {e}', 'danger')
+    finally:
+        cur.close()
+        
+    if session.get('user_role') == 'admin':
+        return redirect(url_for('admin_dashboard'))
+    return redirect(url_for('staff_dashboard'))
+
+# ================= SUPER ADMIN FUNCTIONS =================
+
+@app.route('/superadmin/dashboard')
+@login_required
+@role_required(['super_admin'])
+def superadmin_dashboard():
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        # 1. Total statistics
+        cur.execute("SELECT COUNT(*) AS total FROM stores")
+        total_stores = cur.fetchone()['total']
+        
+        cur.execute("SELECT COALESCE(SUM(total_amount), 0.00) AS total FROM bills")
+        total_revenue = float(cur.fetchone()['total'])
+        
+        cur.execute("SELECT COUNT(*) AS total FROM users WHERE role = 'customer'")
+        total_customers = cur.fetchone()['total']
+        
+        # 2. Stores list with statistics
+        cur.execute("""
+            SELECT 
+                s.id, 
+                s.name, 
+                s.address, 
+                s.owner_email, 
+                s.is_active, 
+                s.created_at,
+                (SELECT COALESCE(SUM(total_amount), 0.00) FROM bills b WHERE b.store_id = s.id) AS revenue,
+                (SELECT COUNT(*) FROM products p WHERE p.store_id = s.id) AS product_count,
+                (SELECT COUNT(*) FROM users u WHERE u.store_id = s.id AND u.role IN ('staff', 'admin')) AS staff_count
+            FROM stores s
+            ORDER BY s.id ASC
+        """)
+        stores_list = cur.fetchall()
+        
+        return render_template(
+            'superadmin_dashboard.html',
+            total_stores=total_stores,
+            total_revenue=total_revenue,
+            total_customers=total_customers,
+            stores_list=stores_list
+        )
+    except Exception as e:
+        flash(f"Error loading platform console: {e}", 'danger')
+        return redirect(url_for('login'))
+    finally:
+        cur.close()
+
+@app.route('/superadmin/toggle-store/<int:store_id>', methods=['POST'])
+@login_required
+@role_required(['super_admin'])
+def toggle_store(store_id):
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        cur.execute("SELECT is_active, name FROM stores WHERE id = %s", (store_id,))
+        store = cur.fetchone()
+        if not store:
+            flash("Store not found.", 'danger')
+            return redirect(url_for('superadmin_dashboard'))
+            
+        new_status = not store['is_active']
+        cur.execute("UPDATE stores SET is_active = %s WHERE id = %s", (new_status, store_id))
+        mysql.connection.commit()
+        
+        status_str = "activated" if new_status else "suspended"
+        flash(f"Store '{store['name']}' has been successfully {status_str}.", 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Failed to update store status: {e}", 'danger')
+    finally:
+        cur.close()
+        
+    return redirect(url_for('superadmin_dashboard'))
+
+@app.route('/superadmin/create-admin', methods=['POST'])
+@login_required
+@role_required(['super_admin'])
+def superadmin_create_admin():
+    name = request.form.get('name')
+    email = request.form.get('email')
+    phone = request.form.get('phone')
+    password = request.form.get('password')
+    store_id = request.form.get('store_id')
+    
+    if not all([name, email, phone, password, store_id]):
+        flash('All fields are required to create a store admin.', 'danger')
+        return redirect(url_for('superadmin_dashboard'))
+        
+    store_id = int(store_id)
+    hashed_password = generate_password_hash(password)
+    
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        # Check if email is already registered
+        cur.execute("SELECT id FROM users WHERE email = %s", (email,))
+        if cur.fetchone():
+            flash('Email already registered.', 'danger')
+            return redirect(url_for('superadmin_dashboard'))
+            
+        # Verify store exists
+        cur.execute("SELECT name FROM stores WHERE id = %s", (store_id,))
+        store = cur.fetchone()
+        if not store:
+            flash('Selected store location does not exist.', 'danger')
+            return redirect(url_for('superadmin_dashboard'))
+            
+        # Insert admin user
+        cur.execute(
+            "INSERT INTO users (name, phone, email, password, role, store_id, is_active) VALUES (%s, %s, %s, %s, 'admin', %s, TRUE)",
+            (name, phone, email, hashed_password, store_id)
+        )
+        mysql.connection.commit()
+        flash(f"Admin '{name}' successfully added to store '{store['name']}'.", 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        flash(f"Failed to create store administrator: {e}", 'danger')
+    finally:
+        cur.close()
+        
+    return redirect(url_for('superadmin_dashboard'))
+
 # ================= ADMIN FUNCTIONS =================
 
 @app.route('/admin/dashboard')
 @login_required
 @role_required(['admin'])
 def admin_dashboard():
+    store_id = request.args.get('store_id', type=int) if session.get('user_role') == 'super_admin' else session.get('store_id')
+    is_super = (session.get('user_role') == 'super_admin' and store_id is None) or (session.get('user_role') == 'admin' and session.get('store_id') is None)
+    
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
     # 1. Total statistics
-    cur.execute("SELECT COUNT(*) AS total FROM products")
-    total_products = cur.fetchone()['total']
-    
-    cur.execute("SELECT COALESCE(SUM(quantity), 0) AS total FROM purchases")
-    total_purchases = cur.fetchone()['total']
-    
-    cur.execute("SELECT COUNT(*) AS total FROM alerts_log")
-    total_alerts = cur.fetchone()['total']
-    
-    # Revenue statistics
-    cur.execute("SELECT COALESCE(SUM(total_amount), 0) AS total FROM bills")
-    total_revenue = float(cur.fetchone()['total'])
-    
-    cur.execute("SELECT COUNT(*) AS total FROM bills")
-    total_bills = cur.fetchone()['total']
+    if is_super:
+        cur.execute("SELECT COUNT(*) AS total FROM products")
+        total_products = cur.fetchone()['total']
+        cur.execute("SELECT COALESCE(SUM(quantity), 0) AS total FROM purchases")
+        total_purchases = cur.fetchone()['total']
+        cur.execute("SELECT COUNT(*) AS total FROM alerts_log")
+        total_alerts = cur.fetchone()['total']
+        cur.execute("SELECT COALESCE(SUM(total_amount), 0) AS total FROM bills")
+        total_revenue = float(cur.fetchone()['total'])
+        cur.execute("SELECT COUNT(*) AS total FROM bills")
+        total_bills = cur.fetchone()['total']
+    else:
+        cur.execute("SELECT COUNT(*) AS total FROM products WHERE store_id = %s", (store_id,))
+        total_products = cur.fetchone()['total']
+        cur.execute("SELECT COALESCE(SUM(pur.quantity), 0) AS total FROM purchases pur JOIN products prod ON pur.product_id = prod.id WHERE prod.store_id = %s", (store_id,))
+        total_purchases = cur.fetchone()['total']
+        cur.execute("SELECT COUNT(*) AS total FROM alerts_log al JOIN products p ON al.product_id = p.id WHERE p.store_id = %s", (store_id,))
+        total_alerts = cur.fetchone()['total']
+        cur.execute("SELECT COALESCE(SUM(total_amount), 0) AS total FROM bills WHERE store_id = %s", (store_id,))
+        total_revenue = float(cur.fetchone()['total'])
+        cur.execute("SELECT COUNT(*) AS total FROM bills WHERE store_id = %s", (store_id,))
+        total_bills = cur.fetchone()['total']
     
     today = datetime.date.today()
     
     # Today's sales
-    cur.execute("SELECT COALESCE(SUM(total_amount), 0) AS total FROM bills WHERE DATE(bill_date) = %s", (today,))
-    today_sales = float(cur.fetchone()['total'])
-    
-    # This month's sales
-    first_of_month = today.replace(day=1)
-    cur.execute("SELECT COALESCE(SUM(total_amount), 0) AS total FROM bills WHERE DATE(bill_date) >= %s", (first_of_month,))
-    monthly_sales = float(cur.fetchone()['total'])
-    
-    # Top selling products (by quantity)
-    cur.execute("""
-        SELECT p.name, SUM(pur.quantity) AS total_qty, SUM(pur.quantity * pur.unit_price) AS total_revenue
-        FROM purchases pur
-        JOIN products p ON pur.product_id = p.id
-        GROUP BY pur.product_id
-        ORDER BY total_qty DESC
-        LIMIT 5
-    """)
+    if is_super:
+        cur.execute("SELECT COALESCE(SUM(total_amount), 0) AS total FROM bills WHERE DATE(bill_date) = %s", (today,))
+        today_sales = float(cur.fetchone()['total'])
+        
+        # This month's sales
+        first_of_month = today.replace(day=1)
+        cur.execute("SELECT COALESCE(SUM(total_amount), 0) AS total FROM bills WHERE DATE(bill_date) >= %s", (first_of_month,))
+        monthly_sales = float(cur.fetchone()['total'])
+    else:
+        cur.execute("SELECT COALESCE(SUM(total_amount), 0) AS total FROM bills WHERE DATE(bill_date) = %s AND store_id = %s", (today, store_id))
+        today_sales = float(cur.fetchone()['total'])
+        
+        # This month's sales
+        first_of_month = today.replace(day=1)
+        cur.execute("SELECT COALESCE(SUM(total_amount), 0) AS total FROM bills WHERE DATE(bill_date) >= %s AND store_id = %s", (first_of_month, store_id))
+        monthly_sales = float(cur.fetchone()['total'])
+        
+    # Top selling products (by quantity) - Per Batch View
+    if is_super:
+        cur.execute("""
+            SELECT p.name, p.expiry_date, SUM(pur.quantity) AS total_qty, SUM(pur.quantity * pur.unit_price) AS total_revenue
+            FROM purchases pur
+            JOIN products p ON pur.product_id = p.id
+            GROUP BY pur.product_id
+            ORDER BY total_qty DESC
+            LIMIT 5
+        """)
+    else:
+        cur.execute("""
+            SELECT p.name, p.expiry_date, SUM(pur.quantity) AS total_qty, SUM(pur.quantity * pur.unit_price) AS total_revenue
+            FROM purchases pur
+            JOIN products p ON pur.product_id = p.id
+            WHERE p.store_id = %s
+            GROUP BY pur.product_id
+            ORDER BY total_qty DESC
+            LIMIT 5
+        """, (store_id,))
     top_products = cur.fetchall()
+
+    # Top selling products (by quantity) - By Product Name View
+    if is_super:
+        cur.execute("""
+            SELECT p.name, SUM(pur.quantity) AS total_qty, SUM(pur.quantity * pur.unit_price) AS total_revenue
+            FROM purchases pur
+            JOIN products p ON pur.product_id = p.id
+            GROUP BY p.name
+            ORDER BY total_qty DESC
+            LIMIT 5
+        """)
+    else:
+        cur.execute("""
+            SELECT p.name, SUM(pur.quantity) AS total_qty, SUM(pur.quantity * pur.unit_price) AS total_revenue
+            FROM purchases pur
+            JOIN products p ON pur.product_id = p.id
+            WHERE p.store_id = %s
+            GROUP BY p.name
+            ORDER BY total_qty DESC
+            LIMIT 5
+        """, (store_id,))
+    top_products_by_name = cur.fetchall()
     
     # Daily sales chart data (last 10 days)
-    cur.execute("""
-        SELECT DATE(bill_date) AS sale_date, SUM(total_amount) AS daily_total
-        FROM bills
-        GROUP BY DATE(bill_date)
-        ORDER BY sale_date DESC
-        LIMIT 10
-    """)
+    if is_super:
+        cur.execute("""
+            SELECT DATE(bill_date) AS sale_date, SUM(total_amount) AS daily_total
+            FROM bills
+            GROUP BY DATE(bill_date)
+            ORDER BY sale_date DESC
+            LIMIT 10
+        """)
+    else:
+        cur.execute("""
+            SELECT DATE(bill_date) AS sale_date, SUM(total_amount) AS daily_total
+            FROM bills
+            WHERE store_id = %s
+            GROUP BY DATE(bill_date)
+            ORDER BY sale_date DESC
+            LIMIT 10
+        """, (store_id,))
     sales_chart_rows = cur.fetchall()
     sales_chart_rows = list(reversed(sales_chart_rows))  # chronological order
     sales_labels = [row['sale_date'].strftime("%Y-%m-%d") for row in sales_chart_rows]
@@ -773,38 +1444,159 @@ def admin_dashboard():
     # 2. Near expiry inventory (within next 7 days)
     seven_days_later = today + datetime.timedelta(days=7)
     
-    cur.execute("""
-        SELECT p.*, u.name AS registered_by_name,
-               DATEDIFF(p.expiry_date, %s) AS days_remaining
-        FROM products p
-        LEFT JOIN users u ON p.registered_by = u.id
-        WHERE p.expiry_date BETWEEN %s AND %s
-        ORDER BY p.expiry_date ASC
-    """, (today, today, seven_days_later))
+    if is_super:
+        cur.execute("""
+            SELECT p.*, u.name AS registered_by_name,
+                   DATEDIFF(p.expiry_date, %s) AS days_remaining
+            FROM products p
+            LEFT JOIN users u ON p.registered_by = u.id
+            WHERE p.expiry_date BETWEEN %s AND %s
+            ORDER BY p.expiry_date ASC
+        """, (today, today, seven_days_later))
+    else:
+        cur.execute("""
+            SELECT p.*, u.name AS registered_by_name,
+                   DATEDIFF(p.expiry_date, %s) AS days_remaining
+            FROM products p
+            LEFT JOIN users u ON p.registered_by = u.id
+            WHERE p.expiry_date BETWEEN %s AND %s AND p.store_id = %s
+            ORDER BY p.expiry_date ASC
+        """, (today, today, seven_days_later, store_id))
     near_expiry_products = cur.fetchall()
     
     # 3. Alert Logs
-    cur.execute("""
-        SELECT al.*, c.name AS customer_name, c.email AS customer_email, p.name AS product_name, p.expiry_date
-        FROM alerts_log al
-        JOIN users c ON al.customer_id = c.id
-        JOIN products p ON al.product_id = p.id
-        ORDER BY al.alert_sent_date DESC, al.id DESC
-        LIMIT 50
-    """)
+    if is_super:
+        cur.execute("""
+            SELECT al.*, c.name AS customer_name, c.email AS customer_email, p.name AS product_name, p.expiry_date
+            FROM alerts_log al
+            JOIN users c ON al.customer_id = c.id
+            JOIN products p ON al.product_id = p.id
+            ORDER BY al.alert_sent_date DESC, al.id DESC
+            LIMIT 50
+        """)
+    else:
+        cur.execute("""
+            SELECT al.*, c.name AS customer_name, c.email AS customer_email, p.name AS product_name, p.expiry_date
+            FROM alerts_log al
+            JOIN users c ON al.customer_id = c.id
+            JOIN products p ON al.product_id = p.id
+            WHERE p.store_id = %s
+            ORDER BY al.alert_sent_date DESC, al.id DESC
+            LIMIT 50
+        """, (store_id,))
     alert_logs = cur.fetchall()
     
     # 4. Chart.js statistics: Alerts by Day
-    cur.execute("""
-        SELECT alert_sent_date, COUNT(*) AS count 
-        FROM alerts_log 
-        GROUP BY alert_sent_date 
-        ORDER BY alert_sent_date ASC 
-        LIMIT 10
-    """)
+    if is_super:
+        cur.execute("""
+            SELECT alert_sent_date, COUNT(*) AS count 
+            FROM alerts_log 
+            GROUP BY alert_sent_date 
+            ORDER BY alert_sent_date ASC 
+            LIMIT 10
+        """)
+    else:
+        cur.execute("""
+            SELECT al.alert_sent_date, COUNT(*) AS count 
+            FROM alerts_log al
+            JOIN products p ON al.product_id = p.id
+            WHERE p.store_id = %s
+            GROUP BY al.alert_sent_date 
+            ORDER BY al.alert_sent_date ASC 
+            LIMIT 10
+        """, (store_id,))
     chart_data_rows = cur.fetchall()
     chart_labels = [row['alert_sent_date'].strftime("%Y-%m-%d") for row in chart_data_rows]
     chart_values = [row['count'] for row in chart_data_rows]
+    
+    # 5. Low stock alerts (stock_quantity <= 5)
+    if is_super:
+        cur.execute("""
+            SELECT name, SUM(stock_quantity) AS total_stock, unit
+            FROM products
+            GROUP BY name, unit
+            HAVING SUM(stock_quantity) <= 5
+            ORDER BY total_stock ASC
+        """)
+    else:
+        cur.execute("""
+            SELECT name, SUM(stock_quantity) AS total_stock, unit
+            FROM products
+            WHERE store_id = %s
+            GROUP BY name, unit
+            HAVING SUM(stock_quantity) <= 5
+            ORDER BY total_stock ASC
+        """, (store_id,))
+    low_stock_products = cur.fetchall()
+    
+    # 6. Total wastage cost
+    if is_super:
+        cur.execute("""
+            SELECT COALESCE(SUM(w.quantity * p.price_per_pack), 0) AS total
+            FROM wastage_log w
+            JOIN products p ON w.product_id = p.id
+        """)
+    else:
+        cur.execute("""
+            SELECT COALESCE(SUM(w.quantity * p.price_per_pack), 0) AS total
+            FROM wastage_log w
+            JOIN products p ON w.product_id = p.id
+            WHERE p.store_id = %s
+        """, (store_id,))
+    total_wastage_cost = float(cur.fetchone()['total'])
+    
+    # 7. Recent product wastage entries
+    if is_super:
+        cur.execute("""
+            SELECT w.*, p.name AS product_name, p.unit, p.price_per_pack, u.name AS logged_by_name,
+                   (w.quantity * p.price_per_pack) AS wastage_cost
+            FROM wastage_log w
+            JOIN products p ON w.product_id = p.id
+            LEFT JOIN users u ON w.logged_by = u.id
+            ORDER BY w.logged_at DESC, w.id DESC
+            LIMIT 20
+        """)
+    else:
+        cur.execute("""
+            SELECT w.*, p.name AS product_name, p.unit, p.price_per_pack, u.name AS logged_by_name,
+                   (w.quantity * p.price_per_pack) AS wastage_cost
+            FROM wastage_log w
+            JOIN products p ON w.product_id = p.id
+            LEFT JOIN users u ON w.logged_by = u.id
+            WHERE p.store_id = %s
+            ORDER BY w.logged_at DESC, w.id DESC
+            LIMIT 20
+        """, (store_id,))
+    recent_wastage = cur.fetchall()
+    
+    # 8. Staff list for store
+    staff_list = []
+    if store_id:
+        cur.execute("SELECT id, name, email, phone, is_active FROM users WHERE store_id = %s AND role = 'staff' ORDER BY name ASC", (store_id,))
+        staff_list = cur.fetchall()
+        
+    # 9. Auto-cleaned wastage log (reason = 'auto_expired')
+    if is_super:
+        cur.execute("""
+            SELECT w.*, p.name AS product_name, p.unit, p.price_per_pack, p.expiry_date AS product_expiry_date,
+                   (w.quantity * p.price_per_pack) AS wastage_cost
+            FROM wastage_log w
+            JOIN products p ON w.product_id = p.id
+            WHERE w.reason = 'auto_expired'
+            ORDER BY w.logged_at DESC, w.id DESC
+            LIMIT 50
+        """)
+    else:
+        cur.execute("""
+            SELECT w.*, p.name AS product_name, p.unit, p.price_per_pack, p.expiry_date AS product_expiry_date,
+                   (w.quantity * p.price_per_pack) AS wastage_cost
+            FROM wastage_log w
+            JOIN products p ON w.product_id = p.id
+            WHERE w.reason = 'auto_expired' AND p.store_id = %s
+            ORDER BY w.logged_at DESC, w.id DESC
+            LIMIT 50
+        """, (store_id,))
+    auto_cleaned_wastage = cur.fetchall()
     
     cur.close()
     
@@ -818,12 +1610,18 @@ def admin_dashboard():
         today_sales=today_sales,
         monthly_sales=monthly_sales,
         top_products=top_products,
+        top_products_by_name=top_products_by_name,
         sales_labels=sales_labels,
         sales_values=sales_values,
         near_expiry_products=near_expiry_products,
         alert_logs=alert_logs,
         chart_labels=chart_labels,
-        chart_values=chart_values
+        chart_values=chart_values,
+        low_stock_products=low_stock_products,
+        total_wastage_cost=total_wastage_cost,
+        recent_wastage=recent_wastage,
+        staff_list=staff_list,
+        auto_cleaned_wastage=auto_cleaned_wastage
     )
 
 @app.route('/admin/trigger-scheduler', methods=['POST'])
@@ -833,6 +1631,15 @@ def admin_trigger_scheduler():
     """Manual scheduler trigger endpoint for testing and verification purposes."""
     alerts_sent_count = run_expiry_alerts_check()
     flash(f"Scheduler run completed. Generated {alerts_sent_count} alerts.", "success")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/trigger-cleanup', methods=['POST'])
+@login_required
+@role_required(['admin'])
+def admin_trigger_cleanup():
+    """Manual trigger route to run the auto-expiry stock cleanup."""
+    cleaned_count = run_auto_expiry_cleanup()
+    flash(f"Auto-cleanup run completed. Cleared stock for {cleaned_count} expired products.", "success")
     return redirect(url_for('admin_dashboard'))
 
 # ================= CUSTOMER FUNCTIONS =================
@@ -1000,6 +1807,70 @@ def run_expiry_alerts_check():
     print(f"[SCHEDULER] Expiry alerts check finished. Total alerts sent/logged: {alerts_count}")
     return alerts_count
 
+
+def run_auto_expiry_cleanup():
+    """
+    Main job that clears products that have been expired for more than 3 days.
+    Sets stock_quantity to 0 and records it in wastage_log.
+    """
+    print("[SCHEDULER] Running daily automated expiry cleanup...")
+    
+    db = MySQLdb.connect(
+        host=app.config['MYSQL_HOST'],
+        user=app.config['MYSQL_USER'],
+        passwd=app.config['MYSQL_PASSWORD'],
+        db=app.config['MYSQL_DB']
+    )
+    cursor = db.cursor(MySQLdb.cursors.DictCursor)
+    
+    cleaned_count = 0
+    today = datetime.date.today()
+    
+    try:
+        # Query products expired for more than 3 days with positive stock_quantity
+        cursor.execute("""
+            SELECT id, name, stock_quantity, expiry_date 
+            FROM products 
+            WHERE expiry_date < (CURRENT_DATE - INTERVAL 3 DAY) AND stock_quantity > 0
+        """)
+        expired_products = cursor.fetchall()
+        
+        for prod in expired_products:
+            prod_id = prod['id']
+            name = prod['name']
+            qty = prod['stock_quantity']
+            expiry = prod['expiry_date']
+            days_overdue = (today - expiry).days
+            
+            # Log in wastage_log
+            cursor.execute("""
+                INSERT INTO wastage_log (product_id, quantity, reason, logged_by) 
+                VALUES (%s, %s, 'auto_expired', NULL)
+            """, (prod_id, qty))
+            
+            # Update product quantity to 0
+            cursor.execute("""
+                UPDATE products 
+                SET stock_quantity = 0 
+                WHERE id = %s
+            """, (prod_id,))
+            
+            print(f"[AUTO-CLEANUP] Cleared {qty} units of {name} (expired {days_overdue} days ago)")
+            cleaned_count += 1
+            
+        db.commit()
+    except Exception as ex:
+        db.rollback()
+        print(f"[SCHEDULER ERROR] Failed to complete auto-cleanup: {ex}")
+        raise ex
+    finally:
+        cursor.close()
+        db.close()
+        
+    print(f"[SCHEDULER] Auto-cleanup finished. Total products cleaned up: {cleaned_count}")
+    return cleaned_count
+
+
 # Setup background scheduler
 scheduler = BackgroundScheduler()
 if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
@@ -1028,9 +1899,10 @@ if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
         print(f"[SCHEDULER WARNING] Failed to acquire file lock: {e}. Starting scheduler anyway.")
     
     if should_start:
-        scheduler.add_job(func=run_expiry_alerts_check, trigger="interval", days=1)
+        scheduler.add_job(func=run_expiry_alerts_check, trigger="cron", hour=0, minute=0)
+        scheduler.add_job(func=run_auto_expiry_cleanup, trigger="cron", hour=1, minute=0)
         scheduler.start()
-        print("[SCHEDULER] APScheduler started successfully.")
+        print("[SCHEDULER] APScheduler started successfully with daily alerts and auto-cleanup jobs.")
 
 if __name__ == '__main__':
     app.run(debug=True)

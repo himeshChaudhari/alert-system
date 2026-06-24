@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Register - ExpiryAlert{% endblock %}
+{% block title %}Create Store Staff - ExpiryAlert{% endblock %}
 
 {% block content %}
 <!-- Skeleton Container -->
@@ -9,11 +9,7 @@
         <div class="auth-logo">
             <div class="skeleton-title skeleton-shimmer" style="width: 150px; margin: 0 auto; height: 30px;"></div>
         </div>
-        <div class="skeleton-card" style="height: 480px; display: flex; flex-direction: column; gap: 1.2rem;">
-            <div>
-                <div class="skeleton-text skeleton-shimmer" style="width: 30%; height: 16px; margin-bottom: 6px;"></div>
-                <div class="skeleton-text skeleton-shimmer" style="height: 38px; width: 100%; border-radius: var(--radius-sm); margin-bottom: 0;"></div>
-            </div>
+        <div class="skeleton-card" style="height: 450px; display: flex; flex-direction: column; gap: 1.2rem;">
             <div>
                 <div class="skeleton-text skeleton-shimmer" style="width: 30%; height: 16px; margin-bottom: 6px;"></div>
                 <div class="skeleton-text skeleton-shimmer" style="height: 38px; width: 100%; border-radius: var(--radius-sm); margin-bottom: 0;"></div>
@@ -28,52 +24,45 @@
             </div>
             <div class="skeleton-button skeleton-shimmer" style="height: 42px; width: 100%; border-radius: var(--radius-sm); margin-top: auto;"></div>
         </div>
-        <div class="auth-footer">
-            <div class="skeleton-text skeleton-shimmer" style="width: 60%; margin: 0 auto; height: 16px;"></div>
-        </div>
     </div>
 </div>
 
 <!-- Actual Content Container -->
 <div class="content-wrapper">
-    <div class="auth-container">
+    <div class="auth-container" style="max-width: 500px;">
         <div class="auth-logo">
-            <i class="fa-solid fa-user-plus"></i> Create Account
+            <i class="fa-solid fa-user-plus"></i> Create Store Staff
         </div>
         
         <div class="card">
-            <form method="POST" action="{{ url_for('register') }}">
+            <form method="POST" action="{{ url_for('create_staff') }}">
                 <div class="form-group">
-                    <label for="name">Full Name</label>
-                    <input type="text" id="name" name="name" class="form-control" placeholder="John Doe" required>
+                    <label for="name">Staff Full Name</label>
+                    <input type="text" id="name" name="name" class="form-control" placeholder="e.g. John Doe" required>
                 </div>
                 
                 <div class="form-group">
                     <label for="email">Email Address</label>
-                    <input type="email" id="email" name="email" class="form-control" placeholder="john@example.com" required autocomplete="username">
+                    <input type="email" id="email" name="email" class="form-control" placeholder="staff@store.com" required autocomplete="username">
                 </div>
                 
                 <div class="form-group">
                     <label for="phone">Phone Number</label>
                     <input type="tel" id="phone" name="phone" class="form-control" placeholder="e.g. 9876543210" required>
-                    <small style="display: block; margin-top: 0.25rem; font-size: 0.75rem; color: var(--text-secondary);">
-                        <i class="fa-solid fa-circle-info"></i> Did you checkout at our store? Use the same phone number to link your purchase history.
-                    </small>
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 1.75rem;">
                     <label for="password">Password</label>
-                    <input type="password" id="password" name="password" class="form-control" placeholder="Choose a secure password" required autocomplete="new-password">
+                    <input type="password" id="password" name="password" class="form-control" placeholder="Set an initial password" required autocomplete="new-password">
                 </div>
                 
-                <button type="submit" class="btn btn-primary btn-block" style="margin-top: 1.5rem;">
-                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Register Account
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-user-plus"></i> Create Staff Account
                 </button>
             </form>
         </div>
-        
-        <div class="auth-footer">
-            Already have an account? <a href="{{ url_for('login') }}">Sign in here</a>
+        <div class="auth-footer" style="text-align: center; margin-top: 1rem;">
+            <a href="{{ url_for('admin_dashboard') }}"><i class="fa-solid fa-arrow-left"></i> Back to Dashboard</a>
         </div>
     </div>
 </div>

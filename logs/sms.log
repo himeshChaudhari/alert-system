@@ -22,3 +22,59 @@ SMS Status: Sent
 --------------------------------------------------
 Hello Himesh! SMS automation is working.
 ==================================================
+
+[SMS LOG] ==================================================
+Timestamp: 2026-06-20 12:14:43
+To: 8195928379
+SMS Status: Sent
+--------------------------------------------------
+Hi Aditya wagh, your product Fortune sunflower oil expires in 7 day(s). Please consume it soon.
+==================================================
+
+[SMS LOG] ==================================================
+Timestamp: 2026-06-24 15:05:58
+To: 7350512332
+SMS Status: Failed (HTTPSConnectionPool(host='api.textbee.dev', port=443): Max retries exceeded with url: /api/v1/gateway/devices/6a362af377015dcde1c6ee2c/send-sms (Caused by NameResolutionError("HTTPSConnection(host='api.textbee.dev', port=443): Failed to resolve 'api.textbee.dev' ([Errno 11001] getaddrinfo failed)")))
+--------------------------------------------------
+Hi Himesh Chaudhari, your product Fortune sunflower oil expires in 3 day(s). Please consume it soon.
+==================================================
+
+[SMS LOG] ==================================================
+Timestamp: 2026-06-24 15:05:58
+To: 7588177133
+SMS Status: Failed (HTTPSConnectionPool(host='api.textbee.dev', port=443): Max retries exceeded with url: /api/v1/gateway/devices/6a362af377015dcde1c6ee2c/send-sms (Caused by NameResolutionError("HTTPSConnection(host='api.textbee.dev', port=443): Failed to resolve 'api.textbee.dev' ([Errno 11001] getaddrinfo failed)")))
+--------------------------------------------------
+Hi shlok, your product Fortune sunflower oil expires in 3 day(s). Please consume it soon.
+==================================================
+
+[SMS LOG] ==================================================
+Timestamp: 2026-06-24 15:05:58
+To: 8975328505
+SMS Status: Failed (HTTPSConnectionPool(host='api.textbee.dev', port=443): Max retries exceeded with url: /api/v1/gateway/devices/6a362af377015dcde1c6ee2c/send-sms (Caused by NameResolutionError("HTTPSConnection(host='api.textbee.dev', port=443): Failed to resolve 'api.textbee.dev' ([Errno 11001] getaddrinfo failed)")))
+--------------------------------------------------
+Hi xyz, your product Fortune sunflower oil expires in 3 day(s). Please consume it soon.
+==================================================
+
+[SMS LOG] ==================================================
+Timestamp: 2026-06-24 15:05:58
+To: 8195928379
+SMS Status: Failed (HTTPSConnectionPool(host='api.textbee.dev', port=443): Max retries exceeded with url: /api/v1/gateway/devices/6a362af377015dcde1c6ee2c/send-sms (Caused by NameResolutionError("HTTPSConnection(host='api.textbee.dev', port=443): Failed to resolve 'api.textbee.dev' ([Errno 11001] getaddrinfo failed)")))
+--------------------------------------------------
+Hi Aditya wagh, your product Fortune sunflower oil expires in 3 day(s). Please consume it soon.
+==================================================
+
+[SMS LOG] ==================================================
+Timestamp: 2026-06-25 00:43:28
+To: 7350512332
+SMS Status: Sent
+--------------------------------------------------
+Hi Himesh Chaudhari, your product Greek Yogurt expires in 7 day(s). Please consume it soon.
+==================================================
+
+[SMS LOG] ==================================================
+Timestamp: 2026-06-25 00:58:12
+To: 9309203419
+SMS Status: Sent
+--------------------------------------------------
+Hi Yojana, your product Greek Yogurt expires in 7 day(s). Please consume it soon.
+==================================================

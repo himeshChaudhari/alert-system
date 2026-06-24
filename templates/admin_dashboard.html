@@ -27,7 +27,7 @@
     </div>
     
     <div class="grid-admin-summary" style="margin-bottom: 2rem;">
-        {% for i in range(3) %}
+        {% for i in range(4) %}
         <div class="skeleton-card" style="display: flex; align-items: center; gap: 1.5rem; height: 95px;">
             <div class="skeleton-circle skeleton-shimmer" style="width: 48px; height: 48px; flex-shrink: 0;"></div>
             <div style="flex-grow: 1;">
@@ -48,7 +48,28 @@
         {% endfor %}
     </div>
 
-    <!-- Table Skeletons Row -->
+    <!-- Table Skeletons Row 1 -->
+    <div class="grid-2" style="margin-bottom: 2rem;">
+        {% for i in range(2) %}
+        <div class="skeleton-card" style="height: 380px; display: flex; flex-direction: column; gap: 1.25rem;">
+            <div class="skeleton-title skeleton-shimmer" style="width: 60%; height: 20px;"></div>
+            <div style="flex: 1; display: flex; flex-direction: column; gap: 12px;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 2px solid var(--border-color); padding-bottom: 8px;">
+                    <div class="skeleton-text skeleton-shimmer" style="width: 40%; height: 16px; margin-bottom: 0;"></div>
+                    <div class="skeleton-text skeleton-shimmer" style="width: 20%; height: 16px; margin-bottom: 0;"></div>
+                </div>
+                {% for row in range(4) %}
+                <div style="display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border-color);">
+                    <div class="skeleton-text skeleton-shimmer" style="width: 50%; height: 14px; margin-bottom: 0;"></div>
+                    <div class="skeleton-text skeleton-shimmer" style="width: 15%; height: 14px; margin-bottom: 0;"></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Table Skeletons Row 2 -->
     <div class="grid-2" style="margin-bottom: 2rem;">
         {% for i in range(2) %}
         <div class="skeleton-card" style="height: 380px; display: flex; flex-direction: column; gap: 1.25rem;">
@@ -100,11 +121,18 @@
         </div>
         
         <!-- Manual Action Trigger (for local validation) -->
-        <form action="{{ url_for('admin_trigger_scheduler') }}" method="POST" style="margin: 0;">
-            <button type="submit" class="btn btn-secondary">
-                <i class="fa-solid fa-clock-rotate-left"></i> Run Daily Alert Job Now
-            </button>
-        </form>
+        <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+            <form action="{{ url_for('admin_trigger_scheduler') }}" method="POST" style="margin: 0;">
+                <button type="submit" class="btn btn-secondary">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Run Daily Alert Job Now
+                </button>
+            </form>
+            <form action="{{ url_for('admin_trigger_cleanup') }}" method="POST" style="margin: 0;">
+                <button type="submit" class="btn btn-secondary">
+                    <i class="fa-solid fa-broom"></i> Run Auto-Cleanup Now
+                </button>
+            </form>
+        </div>
     </div>
     
     <!-- Revenue & Sales Metrics -->
@@ -181,6 +209,16 @@
                 <div class="stat-label">Alerts Generated</div>
             </div>
         </div>
+        
+        <div class="card stat-card">
+            <div class="stat-icon danger">
+                <i class="fa-solid fa-dumpster-fire"></i>
+            </div>
+            <div>
+                <div class="stat-value" style="color: var(--danger);">₹{{ "%.2f"|format(total_wastage_cost) }}</div>
+                <div class="stat-label">Total Wastage Cost</div>
+            </div>
+        </div>
     </div>
     
     <!-- Charts Row: Sales & Alerts -->
@@ -212,55 +250,117 @@
     <div class="grid-2" style="margin-bottom: 2rem;">
         <!-- Top Selling Products -->
         <div class="card" style="display: flex; flex-direction: column;">
-            <h3 class="card-title">
+            <h3 class="card-title" style="margin-bottom: 1rem;">
                 <i class="fa-solid fa-ranking-star" style="color: var(--warning);"></i>
                 Top Selling Products
             </h3>
             
+            <!-- Tabs Navigation -->
+            <div style="display: flex; gap: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1rem; padding-bottom: 0.5rem;">
+                <button type="button" onclick="switchTopProductsTab('by-name')" id="tabBtn-by-name" style="background: none; border: none; border-bottom: 2px solid var(--primary); font-family: inherit; font-size: 0.9rem; font-weight: 600; color: var(--primary); cursor: pointer; padding: 0.25rem 0.5rem; transition: var(--transition);">By Product Name</button>
+                <button type="button" onclick="switchTopProductsTab('by-batch')" id="tabBtn-by-batch" style="background: none; border: none; border-bottom: 2px solid transparent; font-family: inherit; font-size: 0.9rem; font-weight: 500; color: var(--text-secondary); cursor: pointer; padding: 0.25rem 0.5rem; transition: var(--transition);">By Batch / Expiry</button>
+            </div>
+            
             <div style="overflow-y: auto; flex: 1; max-height: 300px;">
-                {% if top_products %}
-                    <div class="table-wrapper" style="border: none; margin-top: 0;">
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Product</th>
-                                    <th style="text-align: center;">Qty Sold</th>
-                                    <th style="text-align: right;">Revenue</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for p in top_products %}
+                <!-- Tab 1: By Product Name -->
+                <div id="topProductsByNameContainer">
+                    {% if top_products_by_name %}
+                        <div class="table-wrapper" style="border: none; margin-top: 0;">
+                            <table>
+                                <thead>
                                     <tr>
-                                        <td>
-                                            {% if loop.index == 1 %}
-                                                <span style="color: #fbbf24; font-weight: 700;">🥇</span>
-                                            {% elif loop.index == 2 %}
-                                                <span style="color: #9ca3af; font-weight: 700;">🥈</span>
-                                            {% elif loop.index == 3 %}
-                                                <span style="color: #cd7f32; font-weight: 700;">🥉</span>
-                                            {% else %}
-                                                <span style="color: var(--text-secondary);">{{ loop.index }}</span>
-                                            {% endif %}
-                                        </td>
-                                        <td><strong>{{ p.name }}</strong></td>
-                                        <td style="text-align: center;">
-                                            <span class="badge success">{{ p.total_qty }}</span>
-                                        </td>
-                                        <td style="text-align: right; font-weight: 600; color: var(--success); font-family: monospace;">
-                                            ₹{{ "%.2f"|format(p.total_revenue) }}
-                                        </td>
+                                        <th>#</th>
+                                        <th>Product Name</th>
+                                        <th style="text-align: center;">Qty Sold</th>
+                                        <th style="text-align: right;">Revenue</th>
                                     </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    </div>
-                {% else %}
-                    <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
-                        <i class="fa-solid fa-chart-simple" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
-                        <p>No sales data yet.</p>
-                    </div>
-                {% endif %}
+                                </thead>
+                                <tbody>
+                                    {% for p in top_products_by_name %}
+                                        <tr>
+                                            <td>
+                                                {% if loop.index == 1 %}
+                                                    <span style="color: #fbbf24; font-weight: 700;">🥇</span>
+                                                {% elif loop.index == 2 %}
+                                                    <span style="color: #9ca3af; font-weight: 700;">🥈</span>
+                                                {% elif loop.index == 3 %}
+                                                    <span style="color: #cd7f32; font-weight: 700;">🥉</span>
+                                                {% else %}
+                                                    <span style="color: var(--text-secondary);">{{ loop.index }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td><strong>{{ p.name }}</strong></td>
+                                            <td style="text-align: center;">
+                                                <span class="badge success">{{ p.total_qty }}</span>
+                                            </td>
+                                            <td style="text-align: right; font-weight: 600; color: var(--success); font-family: monospace;">
+                                                ₹{{ "%.2f"|format(p.total_revenue) }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+                            <i class="fa-solid fa-chart-simple" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p>No sales data yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Tab 2: By Batch / Expiry -->
+                <div id="topProductsByBatchContainer" style="display: none;">
+                    {% if top_products %}
+                        <div class="table-wrapper" style="border: none; margin-top: 0;">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Batch Product</th>
+                                        <th>Expiry Date</th>
+                                        <th style="text-align: center;">Qty Sold</th>
+                                        <th style="text-align: right;">Revenue</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for p in top_products %}
+                                        <tr>
+                                            <td>
+                                                {% if loop.index == 1 %}
+                                                    <span style="color: #fbbf24; font-weight: 700;">🥇</span>
+                                                {% elif loop.index == 2 %}
+                                                    <span style="color: #9ca3af; font-weight: 700;">🥈</span>
+                                                {% elif loop.index == 3 %}
+                                                    <span style="color: #cd7f32; font-weight: 700;">🥉</span>
+                                                {% else %}
+                                                    <span style="color: var(--text-secondary);">{{ loop.index }}</span>
+                                                {% endif %}
+                                            </td>
+                                            <td><strong>{{ p.name }}</strong></td>
+                                            <td>
+                                                <span style="font-family: monospace; font-size: 0.85rem; font-weight: 500;">
+                                                    {{ p.expiry_date.strftime('%Y-%m-%d') if p.expiry_date else 'N/A' }}
+                                                </span>
+                                            </td>
+                                            <td style="text-align: center;">
+                                                <span class="badge success">{{ p.total_qty }}</span>
+                                            </td>
+                                            <td style="text-align: right; font-weight: 600; color: var(--success); font-family: monospace;">
+                                                ₹{{ "%.2f"|format(p.total_revenue) }}
+                                            </td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+                            <i class="fa-solid fa-chart-simple" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                            <p>No sales data yet.</p>
+                        </div>
+                    {% endif %}
+                </div>
             </div>
         </div>
         
@@ -280,12 +380,16 @@
                                     <th>Product</th>
                                     <th>Expiry Date</th>
                                     <th>Days Left</th>
+                                    <th style="text-align: right;">Action</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for p in near_expiry_products %}
                                     <tr>
-                                        <td><strong>{{ p.name }}</strong></td>
+                                        <td>
+                                            <strong>{{ p.name }}</strong>
+                                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Stock: {{ p.stock_quantity }} {{ p.unit }}</div>
+                                        </td>
                                         <td><span style="font-family: monospace;">{{ p.expiry_date }}</span></td>
                                         <td>
                                             {% if p.days_remaining <= 1 %}
@@ -294,6 +398,18 @@
                                                 <span class="badge warning">{{ p.days_remaining }} day(s)</span>
                                             {% else %}
                                                 <span class="badge success">{{ p.days_remaining }} day(s)</span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="text-align: right;">
+                                            {% if p.stock_quantity > 0 %}
+                                                <form action="{{ url_for('write_off_product', product_id=p.id) }}" method="POST" style="display: inline-flex; gap: 0.25rem; align-items: center; margin: 0;">
+                                                    <input type="number" name="quantity" min="1" max="{{ p.stock_quantity }}" value="1" style="width: 60px; padding: 0.2rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.85rem;" required>
+                                                    <button type="submit" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; height: auto;">
+                                                        <i class="fa-solid fa-trash-can"></i> Write Off
+                                                    </button>
+                                                </form>
+                                            {% else %}
+                                                <span class="badge secondary" style="opacity: 0.6;">No Stock</span>
                                             {% endif %}
                                         </td>
                                     </tr>
@@ -310,62 +426,276 @@
             </div>
         </div>
     </div>
-    
-    <!-- Alerts Communication Log -->
-    <div class="card">
-        <h3 class="card-title">
-            <i class="fa-solid fa-list-check" style="color: var(--primary);"></i>
-            Sent Notification History (Alert Log)
-        </h3>
+
+    <!-- Low Stock Alerts & Recent Product Wastage Row -->
+    <div class="grid-2" style="margin-bottom: 2rem;">
+        <!-- Low Stock Alerts Panel -->
+        <div class="card" style="display: flex; flex-direction: column;">
+            <h3 class="card-title">
+                <i class="fa-solid fa-triangle-exclamation" style="color: var(--danger);"></i>
+                Low-Stock Alerts (Stock &le; 5)
+            </h3>
+            
+            <div style="overflow-y: auto; flex: 1; max-height: 300px;">
+                {% if low_stock_products %}
+                    <div class="table-wrapper" style="border: none; margin-top: 0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th style="text-align: center;">Total Stock</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in low_stock_products %}
+                                    <tr>
+                                        <td><strong>{{ p.name }}</strong></td>
+                                        <td style="text-align: center;">
+                                            <span class="badge {% if p.total_stock == 0 %}danger{% else %}warning{% endif %}">
+                                                {{ p.total_stock }} {{ p.unit }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+                        <i class="fa-solid fa-square-check" style="font-size: 2.5rem; margin-bottom: 1rem; color: var(--success); opacity: 0.5;"></i>
+                        <p>All products have sufficient stock levels.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
         
-        <div class="table-wrapper" style="max-height: 400px; overflow-y: auto;">
-            {% if alert_logs %}
+        <!-- Recent Product Wastage Panel -->
+        <div class="card" style="display: flex; flex-direction: column;">
+            <h3 class="card-title">
+                <i class="fa-solid fa-dumpster" style="color: var(--danger);"></i>
+                Recent Product Wastage Log
+            </h3>
+            
+            <div style="overflow-y: auto; flex: 1; max-height: 300px;">
+                {% if recent_wastage %}
+                    <div class="table-wrapper" style="border: none; margin-top: 0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th style="text-align: center;">Qty</th>
+                                    <th>Wastage Cost</th>
+                                    <th>Logged By</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for w in recent_wastage %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ w.product_name }}</strong>
+                                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Reason: {{ w.reason }}</div>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="badge danger">{{ w.quantity }} {{ w.unit }}</span>
+                                        </td>
+                                        <td style="font-weight: 600; color: var(--danger); font-family: monospace;">
+                                            -₹{{ "%.2f"|format(w.wastage_cost) }}
+                                        </td>
+                                        <td>
+                                            <div><strong>{{ w.logged_by_name or 'System' }}</strong></div>
+                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">{{ w.logged_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+                        <i class="fa-solid fa-trash-arrow-up" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                        <p>No product wastage logged yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Expiry Cleanup & Alerts Logs Row -->
+    <div class="grid-2" style="margin-bottom: 2rem;">
+        <!-- Auto-Cleaned (Expired Stock) Log -->
+        <div class="card" style="display: flex; flex-direction: column;">
+            <h3 class="card-title">
+                <i class="fa-solid fa-broom" style="color: var(--warning);"></i>
+                Auto-Cleaned (Expired Stock) Log
+            </h3>
+            
+            <div style="overflow-y: auto; flex: 1; max-height: 400px;">
+                {% if auto_cleaned_wastage %}
+                    <div class="table-wrapper" style="border: none; margin-top: 0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th style="text-align: center;">Qty</th>
+                                    <th>Loss Value</th>
+                                    <th>Cleaned At</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for w in auto_cleaned_wastage %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ w.product_name }}</strong>
+                                            <div style="font-size: 0.8rem; color: var(--text-secondary);">
+                                                Expiry: {{ w.product_expiry_date }}
+                                            </div>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <span class="badge warning">{{ w.quantity }} {{ w.unit }}</span>
+                                        </td>
+                                        <td style="font-weight: 600; color: var(--danger); font-family: monospace;">
+                                            -₹{{ "%.2f"|format(w.wastage_cost) }}
+                                        </td>
+                                        <td style="font-size: 0.8rem; color: var(--text-secondary);">
+                                            {{ w.logged_at.strftime('%Y-%m-%d %H:%M') }}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 4rem 0; color: var(--text-secondary);">
+                        <i class="fa-solid fa-square-check" style="font-size: 3rem; margin-bottom: 1rem; color: var(--success); opacity: 0.5;"></i>
+                        <p>No products automatically cleaned up yet.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Alerts Communication Log -->
+        <div class="card" style="display: flex; flex-direction: column;">
+            <h3 class="card-title">
+                <i class="fa-solid fa-list-check" style="color: var(--primary);"></i>
+                Sent Notification History (Alert Log)
+            </h3>
+            
+            <div style="overflow-y: auto; flex: 1; max-height: 400px;">
+                {% if alert_logs %}
+                    <div class="table-wrapper" style="border: none; margin-top: 0;">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Sent Date</th>
+                                    <th>Customer</th>
+                                    <th>Product Details</th>
+                                    <th>Interval</th>
+                                    <th>Recipient</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in alert_logs %}
+                                    <tr>
+                                        <td>#{{ log.id }}</td>
+                                        <td><span style="font-family: monospace;">{{ log.alert_sent_date }}</span></td>
+                                        <td>
+                                            <div><strong>{{ log.customer_name }}</strong></div>
+                                            <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ log.customer_email }}</div>
+                                        </td>
+                                        <td>
+                                            <div><strong>{{ log.product_name }}</strong></div>
+                                            <div style="font-size: 0.8rem; color: var(--text-secondary);">Expires: {{ log.expiry_date }}</div>
+                                        </td>
+                                        <td>
+                                            <span class="badge {% if log.days_before_expiry == 1 %}danger{% elif log.days_before_expiry == 3 %}warning{% else %}success{% endif %}">
+                                                {{ log.days_before_expiry }} Day(s)
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <span style="font-size: 0.85rem; font-weight: 500; text-transform: capitalize; background: var(--light-green); color: var(--primary-hover); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(156,203,59,0.25);">
+                                                {{ log.recipient }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 4rem 0; color: var(--text-secondary);">
+                        <i class="fa-regular fa-bell" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.4;"></i>
+                        <p>No alert communication records found.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Staff Section (only for store admins, when store_id context is present) -->
+    {% if not is_super or store_id %}
+    <div class="card" style="margin-top: 2rem; margin-bottom: 2rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 1rem;">
+            <h3 class="card-title" style="margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+                <i class="fa-solid fa-users-gear" style="color: var(--primary);"></i>
+                Manage Store Staff
+            </h3>
+            <a href="{{ url_for('create_staff') }}" class="btn btn-primary" style="padding: 0.4rem 1rem; font-size: 0.9rem;">
+                <i class="fa-solid fa-user-plus"></i> Create New Staff
+            </a>
+        </div>
+        
+        <div class="table-wrapper" style="margin-top: 0;">
+            {% if staff_list %}
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>Sent Date</th>
-                            <th>Customer</th>
-                            <th>Product Details</th>
-                            <th>Interval</th>
-                            <th>Recipient</th>
+                            <th>Name</th>
+                            <th>Email Address</th>
+                            <th>Phone Number</th>
+                            <th style="text-align: center; width: 120px;">Status</th>
+                            <th style="text-align: center; width: 140px;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
-                        {% for log in alert_logs %}
+                        {% for staff in staff_list %}
                             <tr>
-                                <td>#{{ log.id }}</td>
-                                <td><span style="font-family: monospace;">{{ log.alert_sent_date }}</span></td>
-                                <td>
-                                    <div><strong>{{ log.customer_name }}</strong></div>
-                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">{{ log.customer_email }}</div>
+                                <td><strong>{{ staff.name }}</strong></td>
+                                <td>{{ staff.email }}</td>
+                                <td>{{ staff.phone }}</td>
+                                <td style="text-align: center;">
+                                    {% if staff.is_active %}
+                                        <span class="badge success" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">Active</span>
+                                    {% else %}
+                                        <span class="badge danger" style="padding: 0.3rem 0.6rem; font-size: 0.75rem;">Deactivated</span>
+                                    {% endif %}
                                 </td>
-                                <td>
-                                    <div><strong>{{ log.product_name }}</strong></div>
-                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Expires: {{ log.expiry_date }}</div>
-                                </td>
-                                <td>
-                                    <span class="badge {% if log.days_before_expiry == 1 %}danger{% elif log.days_before_expiry == 3 %}warning{% else %}success{% endif %}">
-                                        {{ log.days_before_expiry }} Day(s)
-                                    </span>
-                                </td>
-                                <td>
-                                    <span style="font-size: 0.85rem; font-weight: 500; text-transform: capitalize; background: var(--light-green); color: var(--primary-hover); padding: 0.2rem 0.5rem; border-radius: 4px; border: 1px solid rgba(156,203,59,0.25);">
-                                        {{ log.recipient }}
-                                    </span>
+                                <td style="text-align: center;">
+                                    <form method="POST" action="{{ url_for('toggle_staff', staff_id=staff.id) }}" style="margin: 0;">
+                                        {% if staff.is_active %}
+                                            <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; color: var(--danger); border-color: rgba(220, 38, 38, 0.2); background: rgba(220, 38, 38, 0.05);">
+                                                <i class="fa-solid fa-user-slash"></i> Deactivate
+                                            </button>
+                                        {% else %}
+                                            <button type="submit" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background-color: var(--success); border-color: var(--success);">
+                                                <i class="fa-solid fa-user-check"></i> Activate
+                                            </button>
+                                        {% endif %}
+                                    </form>
                                 </td>
                             </tr>
                         {% endfor %}
                     </tbody>
                 </table>
             {% else %}
-                <div style="text-align: center; padding: 4rem 0; color: var(--text-secondary);">
-                    <i class="fa-regular fa-bell" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.4;"></i>
-                    <p>No alert communication records found.</p>
+                <div style="text-align: center; padding: 3rem 0; color: var(--text-secondary);">
+                    <i class="fa-solid fa-users-slash" style="font-size: 2.5rem; margin-bottom: 1rem; opacity: 0.5;"></i>
+                    <p>No staff accounts registered for this location yet.</p>
                 </div>
             {% endif %}
         </div>
     </div>
+    {% endif %}
 </div>
 {% endblock %}
 
@@ -373,6 +703,34 @@
 <!-- ChartJS for visual reporting -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
+    // ========== Tabs Navigation for Top Selling Products ==========
+    function switchTopProductsTab(tabName) {
+        const byNameContainer = document.getElementById('topProductsByNameContainer');
+        const byBatchContainer = document.getElementById('topProductsByBatchContainer');
+        const tabBtnName = document.getElementById('tabBtn-by-name');
+        const tabBtnBatch = document.getElementById('tabBtn-by-batch');
+        
+        if (tabName === 'by-name') {
+            byNameContainer.style.display = 'block';
+            byBatchContainer.style.display = 'none';
+            tabBtnName.style.borderBottom = '2px solid var(--primary)';
+            tabBtnName.style.color = 'var(--primary)';
+            tabBtnName.style.fontWeight = '600';
+            tabBtnBatch.style.borderBottom = '2px solid transparent';
+            tabBtnBatch.style.color = 'var(--text-secondary)';
+            tabBtnBatch.style.fontWeight = '500';
+        } else {
+            byNameContainer.style.display = 'none';
+            byBatchContainer.style.display = 'block';
+            tabBtnName.style.borderBottom = '2px solid transparent';
+            tabBtnName.style.color = 'var(--text-secondary)';
+            tabBtnName.style.fontWeight = '500';
+            tabBtnBatch.style.borderBottom = '2px solid var(--primary)';
+            tabBtnBatch.style.color = 'var(--primary)';
+            tabBtnBatch.style.fontWeight = '600';
+        }
+    }
+
     // ========== Sales Revenue Chart ==========
     const salesLabels = {{ sales_labels | tojson }};
     const salesValues = {{ sales_values | tojson }};
