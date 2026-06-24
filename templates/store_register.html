@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+
+{% block title %}Register Store - ExpiryAlert{% endblock %}
+
+{% block content %}
+<!-- Skeleton Container -->
+<div class="skeleton-wrapper" aria-busy="true" aria-live="polite">
+    <div class="auth-container">
+        <div class="auth-logo">
+            <div class="skeleton-title skeleton-shimmer" style="width: 150px; margin: 0 auto; height: 30px;"></div>
+        </div>
+        <div class="skeleton-card" style="height: 550px; display: flex; flex-direction: column; gap: 1.2rem;">
+            <div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 30%; height: 16px; margin-bottom: 6px;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="height: 38px; width: 100%; border-radius: var(--radius-sm); margin-bottom: 0;"></div>
+            </div>
+            <div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 30%; height: 16px; margin-bottom: 6px;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="height: 38px; width: 100%; border-radius: var(--radius-sm); margin-bottom: 0;"></div>
+            </div>
+            <div>
+                <div class="skeleton-text skeleton-shimmer" style="width: 30%; height: 16px; margin-bottom: 6px;"></div>
+                <div class="skeleton-text skeleton-shimmer" style="height: 38px; width: 100%; border-radius: var(--radius-sm); margin-bottom: 0;"></div>
+            </div>
+            <div class="skeleton-button skeleton-shimmer" style="height: 42px; width: 100%; border-radius: var(--radius-sm); margin-top: auto;"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Actual Content Container -->
+<div class="content-wrapper">
+    <div class="auth-container" style="max-width: 500px;">
+        <div class="auth-logo">
+            <i class="fa-solid fa-store"></i> Register New Store
+        </div>
+        
+        <div class="card">
+            <form method="POST" action="{{ url_for('store_register') }}">
+                <h3 style="margin-top: 0; margin-bottom: 1.25rem; font-family: 'Outfit', sans-serif; font-size: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--text-primary);">
+                    Store Details
+                </h3>
+                
+                <div class="form-group">
+                    <label for="store_name">Store Name</label>
+                    <input type="text" id="store_name" name="store_name" class="form-control" placeholder="e.g. Main Street Supermarket" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="store_address">Store Address</label>
+                    <input type="text" id="store_address" name="store_address" class="form-control" placeholder="e.g. 123 Retail Lane, City" required>
+                </div>
+
+                <h3 style="margin-top: 1.5rem; margin-bottom: 1.25rem; font-family: 'Outfit', sans-serif; font-size: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--text-primary);">
+                    Store Admin Details
+                </h3>
+                
+                <div class="form-group">
+                    <label for="admin_name">Admin Full Name</label>
+                    <input type="text" id="admin_name" name="admin_name" class="form-control" placeholder="John Doe" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin_email">Admin Email Address</label>
+                    <input type="email" id="admin_email" name="admin_email" class="form-control" placeholder="admin@store.com" required autocomplete="username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="admin_phone">Admin Phone Number</label>
+                    <input type="tel" id="admin_phone" name="admin_phone" class="form-control" placeholder="e.g. 9876543210" required>
+                </div>
+                
+                <div class="form-group" style="margin-bottom: 1.75rem;">
+                    <label for="admin_password">Admin Password</label>
+                    <input type="password" id="admin_password" name="admin_password" class="form-control" placeholder="Choose a secure password" required autocomplete="new-password">
+                </div>
+                
+                <button type="submit" class="btn btn-primary btn-block">
+                    <i class="fa-solid fa-arrow-right-to-bracket"></i> Register Store &amp; Admin
+                </button>
+            </form>
+        </div>
+        
+        <div class="auth-footer">
+            Already have an account? <a href="{{ url_for('login') }}">Sign in here</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -2,6 +2,61 @@
 
 {% block title %}Staff Dashboard - ExpiryAlert{% endblock %}
 
+{% block head %}
+<style>
+/* Modal overlay styling */
+.modal-overlay {
+    display: none;
+    position: fixed;
+    z-index: 2000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(4px);
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-card {
+    width: 90%;
+    max-width: 500px;
+    position: relative;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    animation: modalSlideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+}
+
+.modal-close {
+    position: absolute;
+    right: 1.5rem;
+    top: 1.5rem;
+    font-size: 1.75rem;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: var(--transition);
+    line-height: 1;
+}
+
+.modal-close:hover {
+    color: var(--text-primary);
+}
+
+@keyframes modalSlideIn {
+    from {
+        transform: translateY(-20px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+</style>
+{% endblock %}
+
 {% block content %}
 <!-- Skeleton Container -->
 <div class="skeleton-wrapper" aria-busy="true" aria-live="polite">
@@ -55,6 +110,7 @@
                     <div class="skeleton-text skeleton-shimmer" style="width: 15%; height: 16px; margin-bottom: 0;"></div>
                     <div class="skeleton-text skeleton-shimmer" style="width: 15%; height: 16px; margin-bottom: 0;"></div>
                     <div class="skeleton-text skeleton-shimmer" style="width: 15%; height: 16px; margin-bottom: 0;"></div>
+                    <div class="skeleton-text skeleton-shimmer" style="width: 10%; height: 16px; margin-bottom: 0;"></div>
                 </div>
                 {% for row in range(5) %}
                 <div style="display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); align-items: center;">
@@ -63,6 +119,7 @@
                     <div class="skeleton-text skeleton-shimmer" style="width: 12%; height: 14px; margin-bottom: 0;"></div>
                     <div class="skeleton-text skeleton-shimmer" style="width: 12%; height: 14px; margin-bottom: 0;"></div>
                     <div class="skeleton-circle skeleton-shimmer" style="width: 32px; height: 32px; margin-bottom: 0;"></div>
+                    <div class="skeleton-text skeleton-shimmer" style="width: 10%; height: 14px; margin-bottom: 0;"></div>
                 </div>
                 {% endfor %}
             </div>
@@ -157,6 +214,7 @@
                                         <th>Stock</th>
                                         <th>Expiry Date</th>
                                         <th>QR Code</th>
+                                        <th style="text-align: center; width: 100px;">Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -191,6 +249,16 @@
                                                          onmouseout="this.style.transform='scale(1)';">
                                                 </a>
                                             </td>
+                                            <td style="text-align: center;">
+                                                <button type="button" class="btn btn-secondary btn-restock" 
+                                                        data-id="{{ product.id }}" 
+                                                        data-name="{{ product.name|escape }}" 
+                                                        data-stock="{{ product.stock_quantity }}" 
+                                                        data-expiry="{{ product.expiry_date }}"
+                                                        style="padding: 0.35rem 0.7rem; font-size: 0.8rem; border-color: rgba(156, 203, 59, 0.3); color: var(--primary-hover); background: rgba(156, 203, 59, 0.05); font-weight: 600;">
+                                                    <i class="fa-solid fa-plus"></i> Restock
+                                                </button>
+                                            </td>
                                         </tr>
                                     {% endfor %}
                                 </tbody>
@@ -207,6 +275,55 @@
         </div>
     </div>
 </div>
+
+<!-- Restock Modal -->
+<div id="restockModal" class="modal-overlay">
+    <div class="modal-card card">
+        <span class="modal-close" onclick="closeRestockModal()">&times;</span>
+        <h3 class="card-title" style="margin-bottom: 1rem;">
+            <i class="fa-solid fa-truck-ramp-box" style="color: var(--primary);"></i>
+            Smart Restock
+        </h3>
+        
+        <div class="alert alert-info" style="margin-bottom: 1.25rem; font-size: 0.9rem; padding: 0.75rem 1rem; border-radius: var(--radius-sm); background-color: var(--primary-glow); color: var(--text-primary); display: flex; align-items: flex-start; gap: 0.5rem; border: 1px solid rgba(156, 203, 59, 0.2);">
+            <i class="fa-solid fa-circle-info" style="margin-top: 0.15rem; color: var(--primary);"></i>
+            <span>If the incoming batch has a different expiry date, a new product entry and tracking QR code will be generated automatically.</span>
+        </div>
+
+        <form id="restockForm" method="POST" action="">
+            <div class="form-group">
+                <label>Product Name</label>
+                <input type="text" id="restock_product_name" class="form-control" readonly style="background: var(--bg-main); color: var(--text-secondary); cursor: not-allowed;">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.25rem; border-bottom: 1px dashed var(--border-color); padding-bottom: 1rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Current Batch Stock</label>
+                    <input type="text" id="restock_current_stock" class="form-control" readonly style="background: var(--bg-main); color: var(--text-secondary); cursor: not-allowed;">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>Current Batch Expiry</label>
+                    <input type="text" id="restock_current_expiry" class="form-control" readonly style="background: var(--bg-main); color: var(--text-secondary); cursor: not-allowed;">
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="restock_quantity">Quantity to Add (Packs)</label>
+                    <input type="number" id="restock_quantity" name="quantity" class="form-control" min="1" required placeholder="e.g. 10">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label for="restock_expiry_date">Batch Expiry Date</label>
+                    <input type="date" id="restock_expiry_date" name="expiry_date" class="form-control" required>
+                </div>
+            </div>
+            
+            <button type="submit" class="btn btn-primary btn-block">
+                <i class="fa-solid fa-plus"></i> Process Restock
+            </button>
+        </form>
+    </div>
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -220,5 +337,46 @@
         const dd = String(tomorrow.getDate()).padStart(2, '0');
         document.getElementById('expiry_date').min = `${yyyy}-${mm}-${dd}`;
     };
+
+    // Restock Modal Logic
+    const restockModal = document.getElementById('restockModal');
+    const restockForm = document.getElementById('restockForm');
+    const restockProductName = document.getElementById('restock_product_name');
+    const restockCurrentStock = document.getElementById('restock_current_stock');
+    const restockCurrentExpiry = document.getElementById('restock_current_expiry');
+    const restockExpiryDate = document.getElementById('restock_expiry_date');
+    const restockQuantity = document.getElementById('restock_quantity');
+
+    // Event delegation for restock buttons
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-restock');
+        if (btn) {
+            const id = btn.getAttribute('data-id');
+            const name = btn.getAttribute('data-name');
+            const stock = btn.getAttribute('data-stock');
+            const expiry = btn.getAttribute('data-expiry');
+
+            restockForm.action = `/staff/restock/${id}`;
+            restockProductName.value = name;
+            restockCurrentStock.value = `${stock} Pack(s)`;
+            restockCurrentExpiry.value = expiry;
+            restockExpiryDate.value = expiry; // Default to current expiry
+            restockQuantity.value = ''; // clear input
+
+            restockModal.style.display = 'flex';
+            restockQuantity.focus();
+        }
+    });
+
+    function closeRestockModal() {
+        restockModal.style.display = 'none';
+    }
+
+    // Close on outside click
+    window.addEventListener('click', function(e) {
+        if (e.target === restockModal) {
+            closeRestockModal();
+        }
+    });
 </script>
 {% endblock %}

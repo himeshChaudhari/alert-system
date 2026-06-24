@@ -26,13 +26,13 @@
         <div>
             <h2 style="margin-bottom: 0.25rem; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px;">
                 <i class="fa-solid fa-qrcode" style="color: var(--primary); margin-right: 0.25rem;"></i>
-                ExpiryAlert Smart Retail
+                {{ bill.store_name or 'ExpiryAlert Smart Retail' }}
             </h2>
             <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem;">
                 QR-Based Retail Expiry Tracking &amp; Consumer Alert System
             </p>
             <p style="color: var(--text-secondary); font-size: 0.8rem;">
-                <i class="fa-solid fa-location-dot"></i> 123 Retail Avenue, Commerce District, Mumbai — 400001
+                <i class="fa-solid fa-location-dot"></i> {{ bill.store_address or '123 Retail Avenue, Commerce District, Mumbai — 400001' }}
             </p>
         </div>
         <div style="text-align: right;">

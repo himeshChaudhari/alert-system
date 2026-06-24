@@ -706,3 +706,150 @@ SMTP Status: Sent
                         <p>Thank you for shopping with us!</p>
                         
 ==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-06-20 12:14:40
+To: adityawagh1348@gmail.com
+Subject: Alert: Your product 'Fortune sunflower oil' is expiring in 7 day(s)!
+SMTP Status: Sent
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Aditya wagh,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Fortune sunflower oil</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Fortune sunflower oil</li>
+                            <li>Expiry Date: 2026-06-27</li>
+                            <li>Days remaining: 7 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-06-24 15:05:57
+To: himeshchaudhari2332@gmail.com
+Subject: Alert: Your product 'Fortune sunflower oil' is expiring in 3 day(s)!
+SMTP Status: Failed ([WinError 10054] An existing connection was forcibly closed by the remote host) - Logged Mock Email
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Himesh Chaudhari,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Fortune sunflower oil</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Fortune sunflower oil</li>
+                            <li>Expiry Date: 2026-06-27</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-06-24 15:05:58
+To: shlokgharat14@gmail.com
+Subject: Alert: Your product 'Fortune sunflower oil' is expiring in 3 day(s)!
+SMTP Status: Failed ([Errno 11001] getaddrinfo failed) - Logged Mock Email
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear shlok,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Fortune sunflower oil</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Fortune sunflower oil</li>
+                            <li>Expiry Date: 2026-06-27</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-06-24 15:05:58
+To: shradhachaudhari10@gmail.com
+Subject: Alert: Your product 'Fortune sunflower oil' is expiring in 3 day(s)!
+SMTP Status: Failed ([Errno 11001] getaddrinfo failed) - Logged Mock Email
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear xyz,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Fortune sunflower oil</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Fortune sunflower oil</li>
+                            <li>Expiry Date: 2026-06-27</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-06-24 15:05:58
+To: adityawagh1348@gmail.com
+Subject: Alert: Your product 'Fortune sunflower oil' is expiring in 3 day(s)!
+SMTP Status: Failed ([Errno 11001] getaddrinfo failed) - Logged Mock Email
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Aditya wagh,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Fortune sunflower oil</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Fortune sunflower oil</li>
+                            <li>Expiry Date: 2026-06-27</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-06-25 00:43:25
+To: himeshchaudhari2332@gmail.com
+Subject: Alert: Your product 'Greek Yogurt' is expiring in 7 day(s)!
+SMTP Status: Sent
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Himesh Chaudhari,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Greek Yogurt</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Greek Yogurt</li>
+                            <li>Expiry Date: 2026-07-02</li>
+                            <li>Days remaining: 7 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-06-25 00:58:09
+To: khavleyojana@gmail.com
+Subject: Alert: Your product 'Greek Yogurt' is expiring in 7 day(s)!
+SMTP Status: Sent
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear Yojana,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Greek Yogurt</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Greek Yogurt</li>
+                            <li>Expiry Date: 2026-07-02</li>
+                            <li>Days remaining: 7 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
