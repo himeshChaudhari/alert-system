@@ -20,8 +20,15 @@
             <a href="/" class="nav-brand">
                 <span><i class="fa-solid fa-qrcode"></i></span> ExpiryAlert
             </a>
-            
-            <nav class="nav-links">
+
+            <!-- Hamburger toggle (visible on mobile only via CSS) -->
+            <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+
+            <nav class="nav-links" id="nav-links">
                 {% if 'user_id' in session %}
                     <!-- Role-Specific Navigation Links -->
                     {% if session['user_role'] == 'super_admin' %}
@@ -143,6 +150,28 @@
                 });
             });
         });
+    </script>
+
+    <!-- Mobile navbar toggle script -->
+    <script>
+        (function() {
+            var toggle = document.getElementById('nav-toggle');
+            var links  = document.getElementById('nav-links');
+            if (!toggle || !links) return;
+            toggle.addEventListener('click', function() {
+                var isOpen = links.classList.toggle('open');
+                toggle.classList.toggle('open', isOpen);
+                toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+            });
+            // Close menu when any nav link is tapped
+            links.querySelectorAll('a').forEach(function(a) {
+                a.addEventListener('click', function() {
+                    links.classList.remove('open');
+                    toggle.classList.remove('open');
+                    toggle.setAttribute('aria-expanded', 'false');
+                });
+            });
+        })();
     </script>
 
     {% block scripts %}{% endblock %}
