@@ -580,10 +580,19 @@ def staff_dashboard():
     store_id = request.args.get('store_id', type=int) if session.get('user_role') == 'super_admin' else session.get('store_id')
     is_global = (session.get('user_role') == 'super_admin' and store_id is None) or (session.get('user_role') == 'admin' and session.get('store_id') is None)
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    # Note: 3-day cleanup clears stock, 7-day display filter removes expired items from recent-activity view.
     if is_global:
-        cur.execute("SELECT * FROM products ORDER BY id DESC")
+        cur.execute("""
+            SELECT * FROM products 
+            WHERE expiry_date >= (CURRENT_DATE - INTERVAL 7 DAY) 
+            ORDER BY id DESC
+        """)
     else:
-        cur.execute("SELECT * FROM products WHERE store_id = %s ORDER BY id DESC", (store_id,))
+        cur.execute("""
+            SELECT * FROM products 
+            WHERE store_id = %s AND expiry_date >= (CURRENT_DATE - INTERVAL 7 DAY) 
+            ORDER BY id DESC
+        """, (store_id,))
     products = cur.fetchall()
     cur.close()
     return render_template('staff_dashboard.html', products=products)
@@ -743,6 +752,7 @@ def register_product():
 def restock_product(product_id):
     quantity_str = request.form.get('quantity')
     expiry_date_str = request.form.get('expiry_date')
+    price_per_pack_str = request.form.get('price_per_pack')
     
     if not quantity_str or not expiry_date_str:
         flash('Quantity and expiry date are required!', 'danger')
@@ -763,6 +773,17 @@ def restock_product(product_id):
         flash('Invalid expiry date format. Please use YYYY-MM-DD.', 'danger')
         return redirect(url_for('staff_dashboard'))
         
+    new_price = None
+    if price_per_pack_str is not None and price_per_pack_str.strip() != '':
+        try:
+            new_price = float(price_per_pack_str)
+            if new_price < 0:
+                flash('Price per pack cannot be negative.', 'danger')
+                return redirect(url_for('staff_dashboard'))
+        except (ValueError, TypeError):
+            flash('Invalid price value.', 'danger')
+            return redirect(url_for('staff_dashboard'))
+
     store_id = session.get('store_id')
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     try:
@@ -783,19 +804,23 @@ def restock_product(product_id):
             flash('Product not found or access denied.', 'danger')
             return redirect(url_for('staff_dashboard'))
             
+        if new_price is None:
+            new_price = product['price_per_pack']
+            
         db_expiry_date = product['expiry_date']
         
         # Check if the submitted expiry date matches the database expiry date
         if db_expiry_date == submitted_expiry_date:
-            # Match: simply increment stock_quantity on the existing row
+            # Match: simply increment stock_quantity on the existing row and update the price
             new_stock = product['stock_quantity'] + quantity
-            cur.execute("UPDATE products SET stock_quantity = %s WHERE id = %s", (new_stock, product_id))
+            # Note: Changing price_per_pack going forward does not retroactively affect any past bills since unit_price is snapshotted at time of sale.
+            cur.execute("UPDATE products SET stock_quantity = %s, price_per_pack = %s WHERE id = %s", (new_stock, new_price, product_id))
             mysql.connection.commit()
             
             formatted_date = submitted_expiry_date.strftime("%d %B") if submitted_expiry_date else 'N/A'
-            flash(f"Restocked existing batch — new total: {new_stock} units (exp. {formatted_date}).", 'success')
+            flash(f"Restocked existing batch — new total: {new_stock} units (exp. {formatted_date}). Price updated to ₹{new_price:.2f}/pack.", 'success')
         else:
-            # Mismatch: create a brand-new product row with the same attributes but new expiry & quantity
+            # Mismatch: create a brand-new product row with the same attributes but new expiry, quantity & price
             staff_id = session['user_id']
             cur.execute("""
                 INSERT INTO products (name, expiry_date, price_per_pack, stock_quantity, pack_size, unit, qr_code_data, registered_by, store_id)
@@ -803,7 +828,7 @@ def restock_product(product_id):
             """, (
                 product['name'],
                 submitted_expiry_date,
-                product['price_per_pack'],
+                new_price,
                 quantity,
                 product['pack_size'],
                 product['unit'],
@@ -822,8 +847,8 @@ def restock_product(product_id):
             new_expiry_formatted = submitted_expiry_date.strftime("%d %B") if submitted_expiry_date else 'N/A'
             
             flash(
-                f"New batch detected — created new product entry with a fresh QR code (exp. {new_expiry_formatted}). "
-                f"Old batch ({product['stock_quantity']} units, exp. {old_expiry_formatted}) remains active until sold out.", 
+                f"New batch detected — created new product entry with a fresh QR code (exp. {new_expiry_formatted}) at ₹{new_price:.2f}/pack. "
+                f"Old batch ({product['stock_quantity']} units, exp. {old_expiry_formatted}) remains active at ₹{product['price_per_pack']:.2f}/pack until sold out.", 
                 'success'
             )
             

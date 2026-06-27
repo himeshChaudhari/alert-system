@@ -255,6 +255,7 @@
                                                         data-name="{{ product.name|escape }}" 
                                                         data-stock="{{ product.stock_quantity }}" 
                                                         data-expiry="{{ product.expiry_date }}"
+                                                        data-price="{{ product.price_per_pack }}"
                                                         style="padding: 0.35rem 0.7rem; font-size: 0.8rem; border-color: rgba(156, 203, 59, 0.3); color: var(--primary-hover); background: rgba(156, 203, 59, 0.05); font-weight: 600;">
                                                     <i class="fa-solid fa-plus"></i> Restock
                                                 </button>
@@ -318,6 +319,11 @@
                 </div>
             </div>
             
+            <div class="form-group" style="margin-bottom: 1.5rem;">
+                <label for="restock_price_per_pack">Update price (optional — leave as-is if unchanged)</label>
+                <input type="number" id="restock_price_per_pack" name="price_per_pack" class="form-control" step="0.01" min="0" required placeholder="e.g. 50.00">
+            </div>
+            
             <button type="submit" class="btn btn-primary btn-block">
                 <i class="fa-solid fa-plus"></i> Process Restock
             </button>
@@ -346,7 +352,8 @@
     const restockCurrentExpiry = document.getElementById('restock_current_expiry');
     const restockExpiryDate = document.getElementById('restock_expiry_date');
     const restockQuantity = document.getElementById('restock_quantity');
-
+    const restockPrice = document.getElementById('restock_price_per_pack');
+ 
     // Event delegation for restock buttons
     document.addEventListener('click', function(e) {
         const btn = e.target.closest('.btn-restock');
@@ -355,14 +362,16 @@
             const name = btn.getAttribute('data-name');
             const stock = btn.getAttribute('data-stock');
             const expiry = btn.getAttribute('data-expiry');
-
+            const price = btn.getAttribute('data-price');
+ 
             restockForm.action = `/staff/restock/${id}`;
             restockProductName.value = name;
             restockCurrentStock.value = `${stock} Pack(s)`;
             restockCurrentExpiry.value = expiry;
             restockExpiryDate.value = expiry; // Default to current expiry
             restockQuantity.value = ''; // clear input
-
+            restockPrice.value = parseFloat(price).toFixed(2); // Pre-fill current price
+ 
             restockModal.style.display = 'flex';
             restockQuantity.focus();
         }
