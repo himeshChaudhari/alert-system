@@ -1695,21 +1695,65 @@ def admin_dashboard():
         auto_cleaned_wastage=auto_cleaned_wastage
     )
 
-@app.route('/admin/trigger-scheduler', methods=['POST'])
-@login_required
-@role_required(['admin'])
+@app.route('/admin/trigger-scheduler', methods=['GET', 'POST'])
+@csrf.exempt
 def admin_trigger_scheduler():
-    """Manual scheduler trigger endpoint for testing and verification purposes."""
+    """Trigger endpoint for the daily alerts check. Supports both manual admin session and bearer token cron."""
+    is_authenticated = False
+    is_cron = False
+    
+    # Check Bearer Token Auth
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(' ')[1]
+        cron_secret = os.environ.get('CRON_SECRET')
+        if cron_secret and token == cron_secret:
+            is_authenticated = True
+            is_cron = True
+            
+    # Check Session Auth
+    if not is_authenticated and session.get('user_id') and session.get('user_role') in ['admin', 'super_admin']:
+        is_authenticated = True
+
+    if not is_authenticated:
+        return jsonify({'success': False, 'message': 'Unauthorized.'}), 401
+        
     alerts_sent_count = run_expiry_alerts_check()
+    
+    if is_cron:
+        return jsonify({'success': True, 'alerts_sent': alerts_sent_count})
+        
     flash(f"Scheduler run completed. Generated {alerts_sent_count} alerts.", "success")
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/trigger-cleanup', methods=['POST'])
-@login_required
-@role_required(['admin'])
+@app.route('/admin/trigger-cleanup', methods=['GET', 'POST'])
+@csrf.exempt
 def admin_trigger_cleanup():
-    """Manual trigger route to run the auto-expiry stock cleanup."""
+    """Trigger endpoint for the auto-expiry stock cleanup. Supports both manual admin session and bearer token cron."""
+    is_authenticated = False
+    is_cron = False
+    
+    # Check Bearer Token Auth
+    auth_header = request.headers.get('Authorization')
+    if auth_header and auth_header.startswith('Bearer '):
+        token = auth_header.split(' ')[1]
+        cron_secret = os.environ.get('CRON_SECRET')
+        if cron_secret and token == cron_secret:
+            is_authenticated = True
+            is_cron = True
+            
+    # Check Session Auth
+    if not is_authenticated and session.get('user_id') and session.get('user_role') in ['admin', 'super_admin']:
+        is_authenticated = True
+
+    if not is_authenticated:
+        return jsonify({'success': False, 'message': 'Unauthorized.'}), 401
+        
     cleaned_count = run_auto_expiry_cleanup()
+    
+    if is_cron:
+        return jsonify({'success': True, 'cleaned_count': cleaned_count})
+        
     flash(f"Auto-cleanup run completed. Cleared stock for {cleaned_count} expired products.", "success")
     return redirect(url_for('admin_dashboard'))
 
@@ -1945,8 +1989,12 @@ def run_auto_expiry_cleanup():
 
 
 # Setup background scheduler
+# Note: BackgroundScheduler will not run reliably on serverless environments like Vercel.
+# In production on Vercel, the scheduler initialization is bypassed, and daily cron
+# triggers are executed externally via the /admin/trigger-* endpoints.
+# The scheduler is kept active below for local development and non-production environments.
 scheduler = BackgroundScheduler()
-if not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true':
+if (not app.debug or os.environ.get('WERKZEUG_RUN_MAIN') == 'true') and os.environ.get('FLASK_ENV') != 'production':
     lock_file_path = os.path.join(base_dir, 'scheduler.lock')
     should_start = True
     try:
