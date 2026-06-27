@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "builds": [
+    {
+      "src": "wsgi.py",
+      "use": "@vercel/python"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "wsgi.py"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/admin/trigger-scheduler",
+      "schedule": "30 0 * * *"
+    },
+    {
+      "path": "/admin/trigger-cleanup",
+      "schedule": "45 0 * * *"
+    }
+  ]
+}
