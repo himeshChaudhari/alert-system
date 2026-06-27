@@ -9,3 +9,4 @@ __pycache__/
 
 # Project source snapshot
 project_source_snapshot.txt
+test_db_connection.py

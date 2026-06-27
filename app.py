@@ -54,7 +54,9 @@ app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Database Configuration
-app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
+app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST')
+port_val = os.environ.get('MYSQLPORT') or os.environ.get('MYSQL_PORT')
+app.config['MYSQL_PORT'] = int(port_val) if port_val else 3306
 app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
 app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
 app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'expiry_system')
@@ -83,6 +85,7 @@ class MySQL:
             from flask import current_app
             g.mysql_db = pymysql.connect(
                 host=current_app.config['MYSQL_HOST'],
+                port=current_app.config['MYSQL_PORT'],
                 user=current_app.config['MYSQL_USER'],
                 password=current_app.config['MYSQL_PASSWORD'],
                 database=current_app.config['MYSQL_DB']
@@ -1760,6 +1763,7 @@ def run_expiry_alerts_check():
     # we need to open a direct MySQLdb connection inside the scheduler thread.
     db = MySQLdb.connect(
         host=app.config['MYSQL_HOST'],
+        port=app.config['MYSQL_PORT'],
         user=app.config['MYSQL_USER'],
         passwd=app.config['MYSQL_PASSWORD'],
         db=app.config['MYSQL_DB']
@@ -1885,6 +1889,7 @@ def run_auto_expiry_cleanup():
     
     db = MySQLdb.connect(
         host=app.config['MYSQL_HOST'],
+        port=app.config['MYSQL_PORT'],
         user=app.config['MYSQL_USER'],
         passwd=app.config['MYSQL_PASSWORD'],
         db=app.config['MYSQL_DB']
