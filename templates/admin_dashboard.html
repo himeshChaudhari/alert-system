@@ -123,11 +123,13 @@
         <!-- Manual Action Trigger (for local validation) -->
         <div style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
             <form action="{{ url_for('admin_trigger_scheduler') }}" method="POST" style="margin: 0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-secondary">
                     <i class="fa-solid fa-clock-rotate-left"></i> Run Daily Alert Job Now
                 </button>
             </form>
             <form action="{{ url_for('admin_trigger_cleanup') }}" method="POST" style="margin: 0;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <button type="submit" class="btn btn-secondary">
                     <i class="fa-solid fa-broom"></i> Run Auto-Cleanup Now
                 </button>
@@ -403,6 +405,7 @@
                                         <td style="text-align: right;">
                                             {% if p.stock_quantity > 0 %}
                                                 <form action="{{ url_for('write_off_product', product_id=p.id) }}" method="POST" style="display: inline-flex; gap: 0.25rem; align-items: center; margin: 0;">
+                                                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                                     <input type="number" name="quantity" min="1" max="{{ p.stock_quantity }}" value="1" style="width: 60px; padding: 0.2rem; border: 1px solid var(--border-color); border-radius: var(--radius-sm); font-size: 0.85rem;" required>
                                                     <button type="submit" class="btn btn-danger btn-sm" style="padding: 0.2rem 0.5rem; font-size: 0.8rem; height: auto;">
                                                         <i class="fa-solid fa-trash-can"></i> Write Off
@@ -672,6 +675,7 @@
                                 </td>
                                 <td style="text-align: center;">
                                     <form method="POST" action="{{ url_for('toggle_staff', staff_id=staff.id) }}" style="margin: 0;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         {% if staff.is_active %}
                                             <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; color: var(--danger); border-color: rgba(220, 38, 38, 0.2); background: rgba(220, 38, 38, 0.05);">
                                                 <i class="fa-solid fa-user-slash"></i> Deactivate

@@ -19,11 +19,39 @@ from email.mime.multipart import MIMEMultipart
 from functools import wraps
 import requests
 from dotenv import load_dotenv
+from flask_wtf.csrf import CSRFProtect
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+
 base_dir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(base_dir, '.env'))
 
 app = Flask(__name__)
-app.secret_key = os.environ.get('secret_key', 'fallback_secret_key')
+
+# CSRF Protection
+csrf = CSRFProtect(app)
+
+# Rate Limiter
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    storage_uri="memory://",
+    default_limits=[]
+)
+
+# Secret Key Hardening
+sec_key = os.environ.get('secret_key')
+if not sec_key:
+    if os.environ.get('FLASK_ENV') == 'production':
+        raise RuntimeError("Critical configuration error: secret_key is required in production environment.")
+    else:
+        sec_key = 'fallback_secret_key'
+app.secret_key = sec_key
+
+# Session Cookie Hardening
+app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production'
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 # Database Configuration
 app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST', 'localhost')
@@ -65,7 +93,7 @@ mysql = MySQL(app)
 
 # Email Settings (Modify these for real SMTP servers like Gmail, Mailtrap, etc.)
 SMTP_HOST = os.environ.get('SMTP_HOST')
-SMTP_PORT = int(os.environ.get('SMTP_PORT'))
+SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
 SMTP_USER = os.environ.get('SMTP_USER')
 SMTP_PASS = os.environ.get('SMTP_PASS')
 SMTP_SENDER = os.environ.get('SMTP_SENDER')
@@ -242,6 +270,7 @@ def dashboard_router():
 
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def login():
     if 'user_id' in session:
         return redirect(url_for('dashboard_router'))
@@ -271,7 +300,7 @@ def login():
                     if store and not store['is_active']:
                         flash('Your store account has been suspended. Contact support.', 'danger')
                         return render_template('login.html')
-
+ 
             session['user_id'] = user['id']
             session['user_name'] = user['name']
             session['user_email'] = user['email']
@@ -283,8 +312,9 @@ def login():
             flash('Invalid email or password.', 'danger')
             
     return render_template('login.html')
-
+ 
 @app.route('/register', methods=['GET', 'POST'])
+@limiter.limit("5 per minute")
 def register():
     if 'user_id' in session:
         return redirect(url_for('dashboard_router'))
@@ -336,7 +366,8 @@ def register():
             return redirect(url_for('login'))
         except Exception as e:
             mysql.connection.rollback()
-            flash(f'Registration failed: {e}', 'danger')
+            print(f"[ERROR] Registration failed: {e}")
+            flash('Something went wrong. Please try again or contact support.', 'danger')
         finally:
             cur.close()
             
@@ -391,7 +422,8 @@ def store_register():
                 return redirect(url_for('login'))
         except Exception as e:
             mysql.connection.rollback()
-            flash(f'An error occurred: {str(e)}', 'danger')
+            print(f"[ERROR] Store registration failed: {e}")
+            flash('Something went wrong. Please try again or contact support.', 'danger')
         finally:
             cur.close()
             
@@ -464,7 +496,8 @@ def register_staff():
             return redirect(url_for('dashboard_router'))
         except Exception as e:
             mysql.connection.rollback()
-            flash(f'Registration failed: {e}', 'danger')
+            print(f"[ERROR] Staff registration failed: {e}")
+            flash('Something went wrong. Please try again or contact support.', 'danger')
         finally:
             cur.close()
             
@@ -527,7 +560,8 @@ def create_staff():
             return redirect(url_for('admin_dashboard'))
         except Exception as e:
             mysql.connection.rollback()
-            flash(f'Failed to create staff member: {e}', 'danger')
+            print(f"[ERROR] Failed to create staff member: {e}")
+            flash('Something went wrong. Please try again or contact support.', 'danger')
         finally:
             cur.close()
             
@@ -559,7 +593,8 @@ def toggle_staff(staff_id):
         flash(f"Staff member '{staff['name']}' has been {status_str}.", 'success')
     except Exception as e:
         mysql.connection.rollback()
-        flash(f"Failed to update staff status: {e}", 'danger')
+        print(f"[ERROR] Failed to update staff status: {e}")
+        flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
         cur.close()
         
@@ -740,7 +775,8 @@ def register_product():
         flash(f'Product "{name}" ({pack_size} {unit} Pack, ₹{price_per_pack:.2f}, Stock: {stock_quantity}) registered successfully!', 'success')
     except Exception as e:
         mysql.connection.rollback()
-        flash(f'Error registering product: {e}', 'danger')
+        print(f"[ERROR] Product registration failed: {e}")
+        flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
         cur.close()
         
@@ -854,7 +890,8 @@ def restock_product(product_id):
             
     except Exception as e:
         mysql.connection.rollback()
-        flash(f"Error restocking product: {e}", 'danger')
+        print(f"[ERROR] Product restock failed: {e}")
+        flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
         cur.close()
         
@@ -925,7 +962,8 @@ def create_customer():
         })
     except Exception as e:
         mysql.connection.rollback()
-        return jsonify({'success': False, 'message': f'Failed to create customer: {e}'})
+        print(f"[ERROR] Failed to create customer: {e}")
+        return jsonify({'success': False, 'message': 'Something went wrong. Please try again or contact support.'})
     finally:
         cur.close()
 
@@ -1028,7 +1066,8 @@ def checkout():
         })
     except Exception as e:
         mysql.connection.rollback()
-        return jsonify({'success': False, 'message': f'Checkout failed: {e}'})
+        print(f"[ERROR] Checkout failed: {e}")
+        return jsonify({'success': False, 'message': 'Something went wrong. Please try again or contact support.'})
     finally:
         cur.close()
 
@@ -1215,7 +1254,8 @@ def write_off_product(product_id):
         
     except Exception as e:
         mysql.connection.rollback()
-        flash(f'Error writing off stock: {e}', 'danger')
+        print(f"[ERROR] Product write-off failed: {e}")
+        flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
         cur.close()
         
@@ -1266,7 +1306,8 @@ def superadmin_dashboard():
             stores_list=stores_list
         )
     except Exception as e:
-        flash(f"Error loading platform console: {e}", 'danger')
+        print(f"[ERROR] Error loading platform console: {e}")
+        flash('Something went wrong. Please try again or contact support.', 'danger')
         return redirect(url_for('login'))
     finally:
         cur.close()
@@ -1291,7 +1332,8 @@ def toggle_store(store_id):
         flash(f"Store '{store['name']}' has been successfully {status_str}.", 'success')
     except Exception as e:
         mysql.connection.rollback()
-        flash(f"Failed to update store status: {e}", 'danger')
+        print(f"[ERROR] Failed to update store status: {e}")
+        flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
         cur.close()
         
@@ -1338,7 +1380,8 @@ def superadmin_create_admin():
         flash(f"Admin '{name}' successfully added to store '{store['name']}'.", 'success')
     except Exception as e:
         mysql.connection.rollback()
-        flash(f"Failed to create store administrator: {e}", 'danger')
+        print(f"[ERROR] Failed to create store administrator: {e}")
+        flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
         cur.close()
         

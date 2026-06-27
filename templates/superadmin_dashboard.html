@@ -173,6 +173,7 @@
                                 </td>
                                 <td style="text-align: center;">
                                     <form method="POST" action="{{ url_for('toggle_store', store_id=store.id) }}" style="margin: 0; display: inline-block;">
+                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                                         {% if store.is_active %}
                                             <button type="submit" class="btn btn-secondary" style="padding: 0.4rem 0.75rem; font-size: 0.8rem; color: var(--danger); border-color: rgba(220, 38, 38, 0.2); background: rgba(220, 38, 38, 0.05);">
                                                 <i class="fa-solid fa-ban"></i> Suspend
@@ -206,6 +207,7 @@
         </h3>
         
         <form method="POST" action="{{ url_for('superadmin_create_admin') }}" style="max-width: 600px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="grid-2" style="gap: 1.25rem; margin-bottom: 1.25rem;">
                 <div class="form-group">
                     <label for="admin_name">Admin Name</label>

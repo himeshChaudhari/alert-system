@@ -6,3 +6,5 @@ pillow
 apscheduler
 requests
 python-dotenv
+flask-wtf
+flask-limiter
