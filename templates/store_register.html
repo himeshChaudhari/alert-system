@@ -36,6 +36,7 @@
         
         <div class="card">
             <form method="POST" action="{{ url_for('store_register') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <h3 style="margin-top: 0; margin-bottom: 1.25rem; font-family: 'Outfit', sans-serif; font-size: 1.2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; color: var(--text-primary);">
                     Store Details
                 </h3>

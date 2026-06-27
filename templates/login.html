@@ -35,6 +35,7 @@
         
         <div class="card">
             <form method="POST" action="{{ url_for('login') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="form-group">
                     <label for="email">Email Address</label>
                     <input type="email" id="email" name="email" class="form-control" placeholder="name@retail.com" required autocomplete="email">

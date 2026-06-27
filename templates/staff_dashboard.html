@@ -143,6 +143,7 @@
                     Register New Product
                 </h3>
                 <form action="{{ url_for('register_product') }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                     <div class="form-group">
                         <label for="name">Product Name</label>
                         <input type="text" id="name" name="name" class="form-control" placeholder="e.g. Fortune Sunflower Oil" required>
@@ -292,6 +293,7 @@
         </div>
 
         <form id="restockForm" method="POST" action="">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <div class="form-group">
                 <label>Product Name</label>
                 <input type="text" id="restock_product_name" class="form-control" readonly style="background: var(--bg-main); color: var(--text-secondary); cursor: not-allowed;">
