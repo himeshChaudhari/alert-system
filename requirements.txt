@@ -1,6 +1,5 @@
 Flask
-flask-mysqldb
-mysqlclient
+pymysql
 qrcode
 pillow
 apscheduler
