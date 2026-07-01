@@ -11,3 +11,5 @@ __pycache__/
 project_source_snapshot.txt
 test_db_connection.py
 seed_railway_db.py
+migrate_to_postgres.py
+init_postgres_db.py
