@@ -1,5 +1,5 @@
 Flask
-psycopg2-binary
+pymysql
 qrcode
 pillow
 apscheduler
