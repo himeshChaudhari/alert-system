@@ -1,23 +1,19 @@
-import sys
-import pymysql
-import pymysql.cursors
-
-pymysql.install_as_MySQLdb()
-sys.modules['MySQLdb.cursors'] = pymysql.cursors
-
-from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file, g
-from collections import Counter
-import MySQLdb.cursors
-from werkzeug.security import generate_password_hash, check_password_hash
 import os
+import sys
 import datetime
 import qrcode
-from apscheduler.schedulers.background import BackgroundScheduler
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 from functools import wraps
+from collections import Counter
+
+import psycopg2
+import psycopg2.extras
 import requests
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file, g
+from werkzeug.security import generate_password_hash, check_password_hash
+from apscheduler.schedulers.background import BackgroundScheduler
 from dotenv import load_dotenv
 from flask_wtf.csrf import CSRFProtect
 from flask_limiter import Limiter
@@ -53,46 +49,38 @@ app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# Database Configuration
-app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST')
-port_val = os.environ.get('MYSQLPORT') or os.environ.get('MYSQL_PORT')
-app.config['MYSQL_PORT'] = int(port_val) if port_val else 3306
-app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
-app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
-app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'expiry_system')
+# Textbee SMS config
 app.config['TEXTBEE_API_KEY'] = os.environ.get('TEXTBEE_API_KEY')
 app.config['TEXTBEE_DEVICE_ID'] = os.environ.get('TEXTBEE_DEVICE_ID')
 
-class MySQL:
-    def __init__(self, app=None):
-        self.app = app
-        if app is not None:
-            self.init_app(app)
+# ─────────────────────────────────────────────────────────────────────────────
+# DATABASE — Neon PostgreSQL via psycopg2
+# Read DATABASE_URL (pooled, port 6543) from environment.
+# A fresh connection is created per-request and stored in Flask's g;
+# it is closed automatically at teardown.
+# ─────────────────────────────────────────────────────────────────────────────
+DATABASE_URL = os.environ.get('DATABASE_URL')
 
-    def init_app(self, app):
-        @app.teardown_appcontext
-        def teardown_db(exception):
-            db = g.pop('mysql_db', None)
-            if db is not None:
-                try:
-                    db.close()
-                except Exception:
-                    pass
 
-    @property
-    def connection(self):
-        if 'mysql_db' not in g:
-            from flask import current_app
-            g.mysql_db = pymysql.connect(
-                host=current_app.config['MYSQL_HOST'],
-                port=current_app.config['MYSQL_PORT'],
-                user=current_app.config['MYSQL_USER'],
-                password=current_app.config['MYSQL_PASSWORD'],
-                database=current_app.config['MYSQL_DB']
-            )
-        return g.mysql_db
+def get_db():
+    """Return (or lazily create) the per-request psycopg2 connection stored in g."""
+    if 'db' not in g:
+        g.db = psycopg2.connect(
+            DATABASE_URL,
+            cursor_factory=psycopg2.extras.RealDictCursor
+        )
+    return g.db
 
-mysql = MySQL(app)
+
+@app.teardown_appcontext
+def teardown_db(exception):
+    db = g.pop('db', None)
+    if db is not None:
+        try:
+            db.close()
+        except Exception:
+            pass
+
 
 # Email Settings (Modify these for real SMTP servers like Gmail, Mailtrap, etc.)
 SMTP_HOST = os.environ.get('SMTP_HOST')
@@ -282,7 +270,8 @@ def login():
         email = request.form.get('email')
         password = request.form.get('password')
         
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        conn = get_db()
+        cur = conn.cursor()
         cur.execute("SELECT * FROM users WHERE email = %s", (email,))
         user = cur.fetchone()
         cur.close()
@@ -296,7 +285,7 @@ def login():
                     
                 # Check if store is active
                 if user['store_id']:
-                    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+                    cur = conn.cursor()
                     cur.execute("SELECT is_active FROM stores WHERE id = %s", (user['store_id'],))
                     store = cur.fetchone()
                     cur.close()
@@ -334,7 +323,8 @@ def register():
             
         hashed_password = generate_password_hash(password)
         
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        conn = get_db()
+        cur = conn.cursor()
         try:
             # 1. Check if user with this phone number already exists
             cur.execute("SELECT * FROM users WHERE phone = %s", (phone,))
@@ -347,7 +337,7 @@ def register():
                         "UPDATE users SET name = %s, email = %s, password = %s, role = %s, store_id = %s WHERE phone = %s",
                         (name, email, hashed_password, role, store_id, phone)
                     )
-                    mysql.connection.commit()
+                    conn.commit()
                     flash('Registration completed successfully! Your billing history has been linked.', 'success')
                     return redirect(url_for('login'))
                 else:
@@ -364,11 +354,11 @@ def register():
                 "INSERT INTO users (name, phone, email, password, role, store_id) VALUES (%s, %s, %s, %s, %s, %s)",
                 (name, phone, email, hashed_password, role, store_id)
             )
-            mysql.connection.commit()
+            conn.commit()
             flash('Registration successful! Please log in.', 'success')
             return redirect(url_for('login'))
         except Exception as e:
-            mysql.connection.rollback()
+            conn.rollback()
             print(f"[ERROR] Registration failed: {e}")
             flash('Something went wrong. Please try again or contact support.', 'danger')
         finally:
@@ -395,7 +385,8 @@ def store_register():
             
         hashed_password = generate_password_hash(admin_password)
         
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        conn = get_db()
+        cur = conn.cursor()
         try:
             # Check if user with this email already exists
             cur.execute("SELECT id FROM users WHERE email = %s", (admin_email,))
@@ -403,12 +394,12 @@ def store_register():
                 flash('An account with this email address already exists.', 'danger')
                 return render_template('store_register.html')
                 
-            # 1. Insert store
+            # 1. Insert store — use RETURNING id to get the new store's id
             cur.execute(
-                "INSERT INTO stores (name, address, owner_email, is_active) VALUES (%s, %s, %s, TRUE)",
+                "INSERT INTO stores (name, address, owner_email, is_active) VALUES (%s, %s, %s, TRUE) RETURNING id",
                 (store_name, store_address, admin_email)
             )
-            store_id = cur.lastrowid
+            store_id = cur.fetchone()['id']
             
             # 2. Insert admin user
             cur.execute(
@@ -416,7 +407,7 @@ def store_register():
                 (admin_name, admin_phone, admin_email, hashed_password, store_id)
             )
             
-            mysql.connection.commit()
+            conn.commit()
             if session.get('user_role') == 'super_admin':
                 flash(f"Store '{store_name}' and admin account registered successfully!", 'success')
                 return redirect(url_for('superadmin_dashboard'))
@@ -424,7 +415,7 @@ def store_register():
                 flash('Store and admin account registered successfully! You can now log in.', 'success')
                 return redirect(url_for('login'))
         except Exception as e:
-            mysql.connection.rollback()
+            conn.rollback()
             print(f"[ERROR] Store registration failed: {e}")
             flash('Something went wrong. Please try again or contact support.', 'danger')
         finally:
@@ -439,7 +430,7 @@ def register_staff():
     stores = []
     # If super_admin, they need a list of stores to assign staff to
     if session.get('user_role') == 'super_admin':
-        cur_stores = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        cur_stores = get_db().cursor()
         cur_stores.execute("SELECT id, name FROM stores ORDER BY name ASC")
         stores = cur_stores.fetchall()
         cur_stores.close()
@@ -466,7 +457,8 @@ def register_staff():
             
         hashed_password = generate_password_hash(password)
         
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        conn = get_db()
+        cur = conn.cursor()
         try:
             # Check if email is already registered
             cur.execute("SELECT id FROM users WHERE email = %s", (email,))
@@ -483,7 +475,7 @@ def register_staff():
                         "UPDATE users SET name = %s, email = %s, password = %s, role = 'staff', store_id = %s WHERE phone = %s",
                         (name, email, hashed_password, store_id, phone)
                     )
-                    mysql.connection.commit()
+                    conn.commit()
                     flash(f'Staff member {name} registered successfully (billing history linked)!', 'success')
                     return redirect(url_for('dashboard_router'))
                 else:
@@ -494,11 +486,11 @@ def register_staff():
                 "INSERT INTO users (name, phone, email, password, role, store_id) VALUES (%s, %s, %s, %s, 'staff', %s)",
                 (name, phone, email, hashed_password, store_id)
             )
-            mysql.connection.commit()
+            conn.commit()
             flash(f'Staff member {name} registered successfully!', 'success')
             return redirect(url_for('dashboard_router'))
         except Exception as e:
-            mysql.connection.rollback()
+            conn.rollback()
             print(f"[ERROR] Staff registration failed: {e}")
             flash('Something went wrong. Please try again or contact support.', 'danger')
         finally:
@@ -528,7 +520,8 @@ def create_staff():
             
         hashed_password = generate_password_hash(password)
         
-        cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+        conn = get_db()
+        cur = conn.cursor()
         try:
             # Check if email is already registered
             cur.execute("SELECT id FROM users WHERE email = %s", (email,))
@@ -546,7 +539,7 @@ def create_staff():
                         "UPDATE users SET name = %s, email = %s, password = %s, role = 'staff', store_id = %s, is_active = TRUE WHERE phone = %s",
                         (name, email, hashed_password, store_id, phone)
                     )
-                    mysql.connection.commit()
+                    conn.commit()
                     flash(f'Staff member {name} created successfully (linked billing history)!', 'success')
                     return redirect(url_for('admin_dashboard'))
                 else:
@@ -558,11 +551,11 @@ def create_staff():
                 "INSERT INTO users (name, phone, email, password, role, store_id, is_active) VALUES (%s, %s, %s, %s, 'staff', %s, TRUE)",
                 (name, phone, email, hashed_password, store_id)
             )
-            mysql.connection.commit()
+            conn.commit()
             flash(f'Staff member {name} created successfully!', 'success')
             return redirect(url_for('admin_dashboard'))
         except Exception as e:
-            mysql.connection.rollback()
+            conn.rollback()
             print(f"[ERROR] Failed to create staff member: {e}")
             flash('Something went wrong. Please try again or contact support.', 'danger')
         finally:
@@ -579,7 +572,8 @@ def toggle_staff(staff_id):
         flash('Unauthorized store action.', 'danger')
         return redirect(url_for('dashboard_router'))
         
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     try:
         # Verify staff member exists and belongs to the same store
         cur.execute("SELECT id, name, is_active FROM users WHERE id = %s AND store_id = %s AND role = 'staff'", (staff_id, store_id))
@@ -590,12 +584,12 @@ def toggle_staff(staff_id):
             
         new_status = not staff['is_active']
         cur.execute("UPDATE users SET is_active = %s WHERE id = %s", (new_status, staff_id))
-        mysql.connection.commit()
+        conn.commit()
         
         status_str = "activated" if new_status else "deactivated"
         flash(f"Staff member '{staff['name']}' has been {status_str}.", 'success')
     except Exception as e:
-        mysql.connection.rollback()
+        conn.rollback()
         print(f"[ERROR] Failed to update staff status: {e}")
         flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
@@ -617,18 +611,19 @@ def logout():
 def staff_dashboard():
     store_id = request.args.get('store_id', type=int) if session.get('user_role') == 'super_admin' else session.get('store_id')
     is_global = (session.get('user_role') == 'super_admin' and store_id is None) or (session.get('user_role') == 'admin' and session.get('store_id') is None)
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     # Note: 3-day cleanup clears stock, 7-day display filter removes expired items from recent-activity view.
     if is_global:
         cur.execute("""
             SELECT * FROM products 
-            WHERE expiry_date >= (CURRENT_DATE - INTERVAL 7 DAY) 
+            WHERE expiry_date >= (CURRENT_DATE - INTERVAL '7 days') 
             ORDER BY id DESC
         """)
     else:
         cur.execute("""
             SELECT * FROM products 
-            WHERE store_id = %s AND expiry_date >= (CURRENT_DATE - INTERVAL 7 DAY) 
+            WHERE store_id = %s AND expiry_date >= (CURRENT_DATE - INTERVAL '7 days') 
             ORDER BY id DESC
         """, (store_id,))
     products = cur.fetchall()
@@ -641,7 +636,8 @@ def staff_dashboard():
 def get_product_price(product_id):
     """API endpoint: returns product name & price for the billing cart."""
     store_id = session.get('store_id')
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     is_global = session.get('user_role') == 'super_admin' or (session.get('user_role') == 'admin' and store_id is None)
     if is_global:
         cur.execute("SELECT id, name, price_per_pack, stock_quantity, pack_size, unit FROM products WHERE id = %s", (product_id,))
@@ -669,7 +665,8 @@ def get_product_qr(product_id):
     """Generates the QR code image on the fly and streams it as a PNG response."""
     import io
     store_id = session.get('store_id')
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     is_global = session.get('user_role') in ['customer', 'super_admin'] or (session.get('user_role') == 'admin' and store_id is None)
     if is_global:
         cur.execute("SELECT qr_code_data FROM products WHERE id = %s", (product_id,))
@@ -756,14 +753,15 @@ def register_product():
         flash('Super admin cannot register products directly. Please use a store-specific staff/admin account.', 'danger')
         return redirect(url_for('staff_dashboard'))
     
-    cur = mysql.connection.cursor()
+    conn = get_db()
+    cur = conn.cursor()
     try:
-        # 1. Insert product into DB with price (temporarily without QR code data)
+        # 1. Insert product — use RETURNING id to get the new product's id for QR generation
         cur.execute(
-            "INSERT INTO products (name, expiry_date, price_per_pack, stock_quantity, pack_size, unit, qr_code_data, registered_by, store_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            "INSERT INTO products (name, expiry_date, price_per_pack, stock_quantity, pack_size, unit, qr_code_data, registered_by, store_id) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id",
             (name, expiry_date, price_per_pack, stock_quantity, pack_size, unit, "", staff_id, store_id)
         )
-        product_id = cur.lastrowid
+        product_id = cur.fetchone()['id']
         
         # 2. Generate QR code payload (e.g. EXP:id:YYYY-MM-DD)
         qr_data = f"EXP:{product_id}:{expiry_date_str}"
@@ -773,11 +771,11 @@ def register_product():
             "UPDATE products SET qr_code_data = %s WHERE id = %s",
             (qr_data, product_id)
         )
-        mysql.connection.commit()
+        conn.commit()
         
         flash(f'Product "{name}" ({pack_size} {unit} Pack, ₹{price_per_pack:.2f}, Stock: {stock_quantity}) registered successfully!', 'success')
     except Exception as e:
-        mysql.connection.rollback()
+        conn.rollback()
         print(f"[ERROR] Product registration failed: {e}")
         flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
@@ -824,7 +822,8 @@ def restock_product(product_id):
             return redirect(url_for('staff_dashboard'))
 
     store_id = session.get('store_id')
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     try:
         is_global = session.get('user_role') == 'super_admin' or (session.get('user_role') == 'admin' and store_id is None)
         if is_global:
@@ -854,7 +853,7 @@ def restock_product(product_id):
             new_stock = product['stock_quantity'] + quantity
             # Note: Changing price_per_pack going forward does not retroactively affect any past bills since unit_price is snapshotted at time of sale.
             cur.execute("UPDATE products SET stock_quantity = %s, price_per_pack = %s WHERE id = %s", (new_stock, new_price, product_id))
-            mysql.connection.commit()
+            conn.commit()
             
             formatted_date = submitted_expiry_date.strftime("%d %B") if submitted_expiry_date else 'N/A'
             flash(f"Restocked existing batch — new total: {new_stock} units (exp. {formatted_date}). Price updated to ₹{new_price:.2f}/pack.", 'success')
@@ -863,7 +862,7 @@ def restock_product(product_id):
             staff_id = session['user_id']
             cur.execute("""
                 INSERT INTO products (name, expiry_date, price_per_pack, stock_quantity, pack_size, unit, qr_code_data, registered_by, store_id)
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) RETURNING id
             """, (
                 product['name'],
                 submitted_expiry_date,
@@ -875,12 +874,12 @@ def restock_product(product_id):
                 staff_id,
                 product['store_id']
             ))
-            new_product_id = cur.lastrowid
+            new_product_id = cur.fetchone()['id']
             
             # Generate and save new qr_code_data
             new_qr_data = f"EXP:{new_product_id}:{expiry_date_str}"
             cur.execute("UPDATE products SET qr_code_data = %s WHERE id = %s", (new_qr_data, new_product_id))
-            mysql.connection.commit()
+            conn.commit()
             
             old_expiry_formatted = db_expiry_date.strftime("%d %B") if db_expiry_date else 'N/A'
             new_expiry_formatted = submitted_expiry_date.strftime("%d %B") if submitted_expiry_date else 'N/A'
@@ -892,7 +891,7 @@ def restock_product(product_id):
             )
             
     except Exception as e:
-        mysql.connection.rollback()
+        conn.rollback()
         print(f"[ERROR] Product restock failed: {e}")
         flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
@@ -914,7 +913,8 @@ def lookup_customer():
     if not phone:
         return jsonify({'success': False, 'message': 'Phone number is required.'})
         
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     cur.execute("SELECT id, name, email FROM users WHERE phone = %s AND role = 'customer'", (phone,))
     customer = cur.fetchone()
     cur.close()
@@ -938,7 +938,8 @@ def create_customer():
     if not name or not phone:
         return jsonify({'success': False, 'message': 'Name and phone are required.'})
         
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     try:
         # Check if phone number already exists
         cur.execute("SELECT id, name, email FROM users WHERE phone = %s", (phone,))
@@ -946,13 +947,13 @@ def create_customer():
         if existing:
             return jsonify({'success': True, 'customer': existing, 'message': 'Customer already exists.'})
             
-        # Create new customer with NULL email and password
+        # Create new customer with NULL email and password — use RETURNING id
         cur.execute(
-            "INSERT INTO users (name, phone, email, password, role) VALUES (%s, %s, NULL, NULL, 'customer')",
+            "INSERT INTO users (name, phone, email, password, role) VALUES (%s, %s, NULL, NULL, 'customer') RETURNING id",
             (name, phone)
         )
-        mysql.connection.commit()
-        customer_id = cur.lastrowid
+        customer_id = cur.fetchone()['id']
+        conn.commit()
         
         return jsonify({
             'success': True,
@@ -964,7 +965,7 @@ def create_customer():
             'message': 'Customer registered successfully!'
         })
     except Exception as e:
-        mysql.connection.rollback()
+        conn.rollback()
         print(f"[ERROR] Failed to create customer: {e}")
         return jsonify({'success': False, 'message': 'Something went wrong. Please try again or contact support.'})
     finally:
@@ -991,7 +992,8 @@ def checkout():
     # Count quantity of each product (e.g. [1, 1, 2] -> {1: 2, 2: 1})
     product_quantities = Counter(product_ids)
     
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     try:
         today = datetime.date.today()
         now = datetime.datetime.now()
@@ -1022,12 +1024,12 @@ def checkout():
             unit_price = float(products_data[prod_id]['price_per_pack'])
             grand_total += unit_price * qty
         
-        # 1. Create the bill record
+        # 1. Create the bill record — use RETURNING id to get the new bill's id
         cur.execute(
-            "INSERT INTO bills (customer_id, staff_id, total_amount, bill_date, store_id) VALUES (%s, %s, %s, %s, %s)",
+            "INSERT INTO bills (customer_id, staff_id, total_amount, bill_date, store_id) VALUES (%s, %s, %s, %s, %s) RETURNING id",
             (customer_id, staff_id, grand_total, now, staff_store_id)
         )
-        bill_id = cur.lastrowid
+        bill_id = cur.fetchone()['id']
         
         # 2. Insert purchase rows linked to the bill and decrement product stock
         for prod_id, qty in product_quantities.items():
@@ -1059,7 +1061,7 @@ def checkout():
                     (customer_id, prod_id, today, qty, unit_price, bill_id)
                 )
         
-        mysql.connection.commit()
+        conn.commit()
         total_items = sum(product_quantities.values())
         return jsonify({
             'success': True,
@@ -1068,7 +1070,7 @@ def checkout():
             'message': f'Bill #{bill_id} created — {total_items} item(s), ₹{grand_total:.2f} total.'
         })
     except Exception as e:
-        mysql.connection.rollback()
+        conn.rollback()
         print(f"[ERROR] Checkout failed: {e}")
         return jsonify({'success': False, 'message': 'Something went wrong. Please try again or contact support.'})
     finally:
@@ -1080,7 +1082,8 @@ def checkout():
 def billing_history():
     """Shows a list of all bills with customer info, date, total, and item count."""
     store_id = request.args.get('store_id', type=int) if session.get('user_role') == 'super_admin' else session.get('store_id')
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     is_global = (session.get('user_role') == 'super_admin' and store_id is None) or (session.get('user_role') == 'admin' and session.get('store_id') is None)
     if is_global:
         cur.execute("""
@@ -1090,7 +1093,7 @@ def billing_history():
             FROM bills b
             JOIN users u ON b.customer_id = u.id
             LEFT JOIN purchases p ON p.bill_id = b.id
-            GROUP BY b.id
+            GROUP BY b.id, b.bill_date, b.total_amount, u.name, u.phone
             ORDER BY b.id DESC
         """)
     else:
@@ -1102,7 +1105,7 @@ def billing_history():
             JOIN users u ON b.customer_id = u.id
             LEFT JOIN purchases p ON p.bill_id = b.id
             WHERE b.store_id = %s
-            GROUP BY b.id
+            GROUP BY b.id, b.bill_date, b.total_amount, u.name, u.phone
             ORDER BY b.id DESC
         """, (store_id,))
     bills = cur.fetchall()
@@ -1115,7 +1118,8 @@ def billing_history():
 def customer_bills():
     """Renders a list of bills/transactions belonging to the logged-in customer."""
     customer_id = session['user_id']
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     cur.execute("""
         SELECT b.id, b.bill_date, b.total_amount,
                s.name AS store_name,
@@ -1124,7 +1128,7 @@ def customer_bills():
         LEFT JOIN stores s ON b.store_id = s.id
         LEFT JOIN purchases p ON p.bill_id = b.id
         WHERE b.customer_id = %s
-        GROUP BY b.id
+        GROUP BY b.id, b.bill_date, b.total_amount, s.name
         ORDER BY b.id DESC
     """, (customer_id,))
     bills = cur.fetchall()
@@ -1136,7 +1140,8 @@ def customer_bills():
 @role_required(['staff', 'admin', 'customer'])
 def view_bill(bill_id):
     """Renders a printable invoice for a given bill."""
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     
     # Fetch bill header with store details
     cur.execute("""
@@ -1214,7 +1219,8 @@ def write_off_product(product_id):
             return redirect(url_for('admin_dashboard'))
         return redirect(url_for('staff_dashboard'))
         
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     try:
         # Get product and current stock
         store_id = session.get('store_id')
@@ -1227,7 +1233,7 @@ def write_off_product(product_id):
         
         if not product:
             flash('Product not found.', 'danger')
-            mysql.connection.rollback()
+            conn.rollback()
             if session.get('user_role') == 'admin':
                 return redirect(url_for('admin_dashboard'))
             return redirect(url_for('staff_dashboard'))
@@ -1235,7 +1241,7 @@ def write_off_product(product_id):
         current_stock = product['stock_quantity']
         if quantity > current_stock:
             flash(f'Cannot write off {quantity} units. Only {current_stock} units available in stock.', 'danger')
-            mysql.connection.rollback()
+            conn.rollback()
             if session.get('user_role') == 'admin':
                 return redirect(url_for('admin_dashboard'))
             return redirect(url_for('staff_dashboard'))
@@ -1252,11 +1258,11 @@ def write_off_product(product_id):
             (product_id, quantity, reason, session['user_id'])
         )
         
-        mysql.connection.commit()
+        conn.commit()
         flash(f'Successfully wrote off {quantity} units of "{product["name"]}".', 'success')
         
     except Exception as e:
-        mysql.connection.rollback()
+        conn.rollback()
         print(f"[ERROR] Product write-off failed: {e}")
         flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
@@ -1272,7 +1278,8 @@ def write_off_product(product_id):
 @login_required
 @role_required(['super_admin'])
 def superadmin_dashboard():
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     try:
         # 1. Total statistics
         cur.execute("SELECT COUNT(*) AS total FROM stores")
@@ -1319,7 +1326,8 @@ def superadmin_dashboard():
 @login_required
 @role_required(['super_admin'])
 def toggle_store(store_id):
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     try:
         cur.execute("SELECT is_active, name FROM stores WHERE id = %s", (store_id,))
         store = cur.fetchone()
@@ -1329,12 +1337,12 @@ def toggle_store(store_id):
             
         new_status = not store['is_active']
         cur.execute("UPDATE stores SET is_active = %s WHERE id = %s", (new_status, store_id))
-        mysql.connection.commit()
+        conn.commit()
         
         status_str = "activated" if new_status else "suspended"
         flash(f"Store '{store['name']}' has been successfully {status_str}.", 'success')
     except Exception as e:
-        mysql.connection.rollback()
+        conn.rollback()
         print(f"[ERROR] Failed to update store status: {e}")
         flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
@@ -1359,7 +1367,8 @@ def superadmin_create_admin():
     store_id = int(store_id)
     hashed_password = generate_password_hash(password)
     
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     try:
         # Check if email is already registered
         cur.execute("SELECT id FROM users WHERE email = %s", (email,))
@@ -1379,10 +1388,10 @@ def superadmin_create_admin():
             "INSERT INTO users (name, phone, email, password, role, store_id, is_active) VALUES (%s, %s, %s, %s, 'admin', %s, TRUE)",
             (name, phone, email, hashed_password, store_id)
         )
-        mysql.connection.commit()
+        conn.commit()
         flash(f"Admin '{name}' successfully added to store '{store['name']}'.", 'success')
     except Exception as e:
-        mysql.connection.rollback()
+        conn.rollback()
         print(f"[ERROR] Failed to create store administrator: {e}")
         flash('Something went wrong. Please try again or contact support.', 'danger')
     finally:
@@ -1399,7 +1408,8 @@ def admin_dashboard():
     store_id = request.args.get('store_id', type=int) if session.get('user_role') == 'super_admin' else session.get('store_id')
     is_super = (session.get('user_role') == 'super_admin' and store_id is None) or (session.get('user_role') == 'admin' and session.get('store_id') is None)
     
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     
     # 1. Total statistics
     if is_super:
@@ -1446,12 +1456,13 @@ def admin_dashboard():
         monthly_sales = float(cur.fetchone()['total'])
         
     # Top selling products (by quantity) - Per Batch View
+    # GROUP BY includes pur.product_id, p.name, p.expiry_date for PostgreSQL strictness
     if is_super:
         cur.execute("""
             SELECT p.name, p.expiry_date, SUM(pur.quantity) AS total_qty, SUM(pur.quantity * pur.unit_price) AS total_revenue
             FROM purchases pur
             JOIN products p ON pur.product_id = p.id
-            GROUP BY pur.product_id
+            GROUP BY pur.product_id, p.name, p.expiry_date
             ORDER BY total_qty DESC
             LIMIT 5
         """)
@@ -1461,7 +1472,7 @@ def admin_dashboard():
             FROM purchases pur
             JOIN products p ON pur.product_id = p.id
             WHERE p.store_id = %s
-            GROUP BY pur.product_id
+            GROUP BY pur.product_id, p.name, p.expiry_date
             ORDER BY total_qty DESC
             LIMIT 5
         """, (store_id,))
@@ -1515,10 +1526,11 @@ def admin_dashboard():
     # 2. Near expiry inventory (within next 7 days)
     seven_days_later = today + datetime.timedelta(days=7)
     
+    # DATEDIFF(p.expiry_date, today) → (p.expiry_date - today::date) in PostgreSQL
     if is_super:
         cur.execute("""
             SELECT p.*, u.name AS registered_by_name,
-                   DATEDIFF(p.expiry_date, %s) AS days_remaining
+                   (p.expiry_date - %s::date) AS days_remaining
             FROM products p
             LEFT JOIN users u ON p.registered_by = u.id
             WHERE p.expiry_date BETWEEN %s AND %s
@@ -1527,7 +1539,7 @@ def admin_dashboard():
     else:
         cur.execute("""
             SELECT p.*, u.name AS registered_by_name,
-                   DATEDIFF(p.expiry_date, %s) AS days_remaining
+                   (p.expiry_date - %s::date) AS days_remaining
             FROM products p
             LEFT JOIN users u ON p.registered_by = u.id
             WHERE p.expiry_date BETWEEN %s AND %s AND p.store_id = %s
@@ -1764,15 +1776,17 @@ def admin_trigger_cleanup():
 @role_required(['customer'])
 def customer_dashboard():
     customer_id = session['user_id']
-    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    conn = get_db()
+    cur = conn.cursor()
     
     # 1. Personal expiry timeline (purchased products sorted by expiry_date)
     today = datetime.date.today()
+    # DATEDIFF(p.expiry_date, today) → (p.expiry_date - today::date) in PostgreSQL
     cur.execute("""
         SELECT pur.purchase_date, p.name AS product_name, p.expiry_date,
                p.pack_size, p.unit,
                pur.quantity,
-               DATEDIFF(p.expiry_date, %s) AS days_remaining
+               (p.expiry_date - %s::date) AS days_remaining
         FROM purchases pur
         JOIN products p ON pur.product_id = p.id
         WHERE pur.customer_id = %s
@@ -1800,19 +1814,16 @@ def run_expiry_alerts_check():
     """
     Main job that checks for purchased products that are 7, 3, or 1 days away from expiry
     and emails the customer and admin, recording the result in alerts_log.
+    Uses a direct psycopg2 connection (not Flask app context) so it works both in the
+    APScheduler thread (local dev) and as a Vercel cron trigger.
+    DATABASE_URL_DIRECT (port 5432) is preferred to avoid pooler statement timeouts;
+    falls back to DATABASE_URL if not set.
     """
     print("[SCHEDULER] Running daily retail expiry alerts check...")
     
-    # Since we are using Flask-MySQLdb which requires request contexts,
-    # we need to open a direct MySQLdb connection inside the scheduler thread.
-    db = MySQLdb.connect(
-        host=app.config['MYSQL_HOST'],
-        port=app.config['MYSQL_PORT'],
-        user=app.config['MYSQL_USER'],
-        passwd=app.config['MYSQL_PASSWORD'],
-        db=app.config['MYSQL_DB']
-    )
-    cursor = db.cursor(MySQLdb.cursors.DictCursor)
+    db_url = os.environ.get('DATABASE_URL_DIRECT') or os.environ.get('DATABASE_URL')
+    db = psycopg2.connect(db_url, cursor_factory=psycopg2.extras.RealDictCursor)
+    cursor = db.cursor()
     
     alerts_count = 0
     today = datetime.date.today()
@@ -1928,27 +1939,24 @@ def run_auto_expiry_cleanup():
     """
     Main job that clears products that have been expired for more than 3 days.
     Sets stock_quantity to 0 and records it in wastage_log.
+    Uses a direct psycopg2 connection (not Flask app context).
     """
     print("[SCHEDULER] Running daily automated expiry cleanup...")
     
-    db = MySQLdb.connect(
-        host=app.config['MYSQL_HOST'],
-        port=app.config['MYSQL_PORT'],
-        user=app.config['MYSQL_USER'],
-        passwd=app.config['MYSQL_PASSWORD'],
-        db=app.config['MYSQL_DB']
-    )
-    cursor = db.cursor(MySQLdb.cursors.DictCursor)
+    db_url = os.environ.get('DATABASE_URL_DIRECT') or os.environ.get('DATABASE_URL')
+    db = psycopg2.connect(db_url, cursor_factory=psycopg2.extras.RealDictCursor)
+    cursor = db.cursor()
     
     cleaned_count = 0
     today = datetime.date.today()
     
     try:
         # Query products expired for more than 3 days with positive stock_quantity
+        # INTERVAL '3 days' is PostgreSQL syntax
         cursor.execute("""
             SELECT id, name, stock_quantity, expiry_date 
             FROM products 
-            WHERE expiry_date < (CURRENT_DATE - INTERVAL 3 DAY) AND stock_quantity > 0
+            WHERE expiry_date < (CURRENT_DATE - INTERVAL '3 days') AND stock_quantity > 0
         """)
         expired_products = cursor.fetchall()
         
