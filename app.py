@@ -1,15 +1,12 @@
 import sys
-import psycopg2
-import psycopg2.extras
+import pymysql
+import pymysql.cursors
+
+pymysql.install_as_MySQLdb()
+sys.modules['MySQLdb.cursors'] = pymysql.cursors
+
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify, send_file, g
 from collections import Counter
-
-# Mock MySQLdb module path so existing code references don't crash
-class MySQLdbMock:
-    class cursors:
-        DictCursor = "DictCursor"
-sys.modules['MySQLdb'] = MySQLdbMock
-sys.modules['MySQLdb.cursors'] = MySQLdbMock.cursors
 import MySQLdb.cursors
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
@@ -56,87 +53,17 @@ app.config['SESSION_COOKIE_SECURE'] = os.environ.get('FLASK_ENV') == 'production
 app.config['SESSION_COOKIE_HTTPONLY'] = True
 app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
-# Connection compatibility wrappers for PostgreSQL
-class DictCursorWrapper:
-    def __init__(self, cursor):
-        self._cursor = cursor
-        self._lastrowid = None
-
-    def execute(self, query, vars=None):
-        query = query.replace('`', '"')
-        
-        # Intercept INSERT queries to append RETURNING id to mimic lastrowid
-        q_strip = query.strip().upper()
-        if q_strip.startswith("INSERT INTO "):
-            if "RETURNING" not in q_strip:
-                query_stripped = query.rstrip().rstrip(';')
-                query = f"{query_stripped} RETURNING id"
-                self._cursor.execute(query, vars)
-                try:
-                    row = self._cursor.fetchone()
-                    if row:
-                        if isinstance(row, dict):
-                            self._lastrowid = row.get('id')
-                        else:
-                            self._lastrowid = row[0]
-                except Exception:
-                    pass
-                return
-
-        self._cursor.execute(query, vars)
-
-    @property
-    def lastrowid(self):
-        return self._lastrowid
-
-    @property
-    def rowcount(self):
-        return self._cursor.rowcount
-
-    def fetchone(self):
-        return self._cursor.fetchone()
-
-    def fetchall(self):
-        return self._cursor.fetchall()
-
-    def close(self):
-        return self._cursor.close()
-
-    def __getattr__(self, name):
-        return getattr(self._cursor, name)
-
-
-class ConnectionWrapper:
-    def __init__(self, conn):
-        self._conn = conn
-
-    def cursor(self, cursor_factory=None):
-        if cursor_factory is not None:
-            # Pymysql passes DictCursor, which we map to RealDictCursor
-            raw_cursor = self._conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
-        else:
-            raw_cursor = self._conn.cursor()
-        return DictCursorWrapper(raw_cursor)
-
-    def commit(self):
-        return self._conn.commit()
-
-    def rollback(self):
-        return self._conn.rollback()
-
-    def close(self):
-        return self._conn.close()
-
-    def __getattr__(self, name):
-        return getattr(self._conn, name)
-
-
 # Database Configuration
-app.config['DATABASE_URL'] = os.environ.get('DATABASE_URL')
+app.config['MYSQL_HOST'] = os.environ.get('MYSQL_HOST')
+port_val = os.environ.get('MYSQLPORT') or os.environ.get('MYSQL_PORT')
+app.config['MYSQL_PORT'] = int(port_val) if port_val else 3306
+app.config['MYSQL_USER'] = os.environ.get('MYSQL_USER', 'root')
+app.config['MYSQL_PASSWORD'] = os.environ.get('MYSQL_PASSWORD')
+app.config['MYSQL_DB'] = os.environ.get('MYSQL_DB', 'expiry_system')
 app.config['TEXTBEE_API_KEY'] = os.environ.get('TEXTBEE_API_KEY')
 app.config['TEXTBEE_DEVICE_ID'] = os.environ.get('TEXTBEE_DEVICE_ID')
 
-class PostgreSQL:
+class MySQL:
     def __init__(self, app=None):
         self.app = app
         if app is not None:
@@ -145,7 +72,7 @@ class PostgreSQL:
     def init_app(self, app):
         @app.teardown_appcontext
         def teardown_db(exception):
-            db = g.pop('pg_db', None)
+            db = g.pop('mysql_db', None)
             if db is not None:
                 try:
                     db.close()
@@ -154,18 +81,18 @@ class PostgreSQL:
 
     @property
     def connection(self):
-        if 'pg_db' not in g:
+        if 'mysql_db' not in g:
             from flask import current_app
-            db_url = current_app.config['DATABASE_URL']
-            if not db_url:
-                # Provide a local fallback for development purposes
-                db_url = "postgresql://postgres:postgres@localhost:5432/expiry_system"
-            conn = psycopg2.connect(db_url)
-            g.pg_db = ConnectionWrapper(conn)
-        return g.pg_db
+            g.mysql_db = pymysql.connect(
+                host=current_app.config['MYSQL_HOST'],
+                port=current_app.config['MYSQL_PORT'],
+                user=current_app.config['MYSQL_USER'],
+                password=current_app.config['MYSQL_PASSWORD'],
+                database=current_app.config['MYSQL_DB']
+            )
+        return g.mysql_db
 
-# Keep instance variable named mysql to ensure drop-in compatibility
-mysql = PostgreSQL(app)
+mysql = MySQL(app)
 
 # Email Settings (Modify these for real SMTP servers like Gmail, Mailtrap, etc.)
 SMTP_HOST = os.environ.get('SMTP_HOST')
@@ -695,13 +622,13 @@ def staff_dashboard():
     if is_global:
         cur.execute("""
             SELECT * FROM products 
-            WHERE expiry_date >= (CURRENT_DATE - 7) 
+            WHERE expiry_date >= (CURRENT_DATE - INTERVAL 7 DAY) 
             ORDER BY id DESC
         """)
     else:
         cur.execute("""
             SELECT * FROM products 
-            WHERE store_id = %s AND expiry_date >= (CURRENT_DATE - 7) 
+            WHERE store_id = %s AND expiry_date >= (CURRENT_DATE - INTERVAL 7 DAY) 
             ORDER BY id DESC
         """, (store_id,))
     products = cur.fetchall()
@@ -1591,7 +1518,7 @@ def admin_dashboard():
     if is_super:
         cur.execute("""
             SELECT p.*, u.name AS registered_by_name,
-                   (p.expiry_date - %s) AS days_remaining
+                   DATEDIFF(p.expiry_date, %s) AS days_remaining
             FROM products p
             LEFT JOIN users u ON p.registered_by = u.id
             WHERE p.expiry_date BETWEEN %s AND %s
@@ -1600,7 +1527,7 @@ def admin_dashboard():
     else:
         cur.execute("""
             SELECT p.*, u.name AS registered_by_name,
-                   (p.expiry_date - %s) AS days_remaining
+                   DATEDIFF(p.expiry_date, %s) AS days_remaining
             FROM products p
             LEFT JOIN users u ON p.registered_by = u.id
             WHERE p.expiry_date BETWEEN %s AND %s AND p.store_id = %s
@@ -1845,7 +1772,7 @@ def customer_dashboard():
         SELECT pur.purchase_date, p.name AS product_name, p.expiry_date,
                p.pack_size, p.unit,
                pur.quantity,
-               (p.expiry_date - %s) AS days_remaining
+               DATEDIFF(p.expiry_date, %s) AS days_remaining
         FROM purchases pur
         JOIN products p ON pur.product_id = p.id
         WHERE pur.customer_id = %s
@@ -1878,11 +1805,14 @@ def run_expiry_alerts_check():
     
     # Since we are using Flask-MySQLdb which requires request contexts,
     # we need to open a direct MySQLdb connection inside the scheduler thread.
-    db_url = app.config['DATABASE_URL']
-    if not db_url:
-        db_url = "postgresql://postgres:postgres@localhost:5432/expiry_system"
-    db = psycopg2.connect(db_url)
-    cursor = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    db = MySQLdb.connect(
+        host=app.config['MYSQL_HOST'],
+        port=app.config['MYSQL_PORT'],
+        user=app.config['MYSQL_USER'],
+        passwd=app.config['MYSQL_PASSWORD'],
+        db=app.config['MYSQL_DB']
+    )
+    cursor = db.cursor(MySQLdb.cursors.DictCursor)
     
     alerts_count = 0
     today = datetime.date.today()
@@ -2001,11 +1931,14 @@ def run_auto_expiry_cleanup():
     """
     print("[SCHEDULER] Running daily automated expiry cleanup...")
     
-    db_url = app.config['DATABASE_URL']
-    if not db_url:
-        db_url = "postgresql://postgres:postgres@localhost:5432/expiry_system"
-    db = psycopg2.connect(db_url)
-    cursor = db.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+    db = MySQLdb.connect(
+        host=app.config['MYSQL_HOST'],
+        port=app.config['MYSQL_PORT'],
+        user=app.config['MYSQL_USER'],
+        passwd=app.config['MYSQL_PASSWORD'],
+        db=app.config['MYSQL_DB']
+    )
+    cursor = db.cursor(MySQLdb.cursors.DictCursor)
     
     cleaned_count = 0
     today = datetime.date.today()
@@ -2015,7 +1948,7 @@ def run_auto_expiry_cleanup():
         cursor.execute("""
             SELECT id, name, stock_quantity, expiry_date 
             FROM products 
-            WHERE expiry_date < (CURRENT_DATE - 3) AND stock_quantity > 0
+            WHERE expiry_date < (CURRENT_DATE - INTERVAL 3 DAY) AND stock_quantity > 0
         """)
         expired_products = cursor.fetchall()
         
