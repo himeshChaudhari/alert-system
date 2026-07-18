@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}Invoice #{{ bill.id }} - ExpiryAlert{% endblock %}
+{% block title %}Invoice #{{ bill.id }} - ExpiryPilot{% endblock %}
 
 {% block content %}
 <!-- Screen-Only Action Buttons -->
@@ -26,7 +26,7 @@
         <div>
             <h2 style="margin-bottom: 0.25rem; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px;">
                 <i class="fa-solid fa-qrcode" style="color: var(--primary); margin-right: 0.25rem;"></i>
-                {{ bill.store_name or 'ExpiryAlert Smart Retail' }}
+                {{ bill.store_name or 'ExpiryPilot Smart Retail' }}
             </h2>
             <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem;">
                 QR-Based Retail Expiry Tracking &amp; Consumer Alert System
@@ -140,7 +140,7 @@
             We appreciate your business. For any queries, please contact our support team.
         </p>
         <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.75rem; font-style: italic;">
-            <i class="fa-solid fa-shield-halved"></i> Powered by ExpiryAlert Smart Retail — Ensuring Freshness, Always.
+            <i class="fa-solid fa-shield-halved"></i> Powered by ExpiryPilot Smart Retail — Ensuring Freshness, Always.
         </p>
     </div>
 </div>

@@ -1,6 +1,6 @@
-# ExpiryAlert - Multi-Store Retail Inventory & Consumer Alert System
+# ExpiryPilot - Multi-Store Retail Inventory & Consumer Alert System
 
-ExpiryAlert is a modern, professional retail inventory optimization and consumer safety platform built on Flask and Supabase (PostgreSQL). It enables store owners to register batches of stock using unique QR code identifiers, scan products at billing checkout counters, generate receipt invoices, and automatically notify consumers via SMS and Email before their purchased items expire.
+ExpiryPilot is a modern, professional retail inventory optimization and consumer safety platform built on Flask and Supabase (PostgreSQL). It enables store owners to register batches of stock using unique QR code identifiers, scan products at billing checkout counters, generate receipt invoices, and automatically notify consumers via SMS and Email before their purchased items expire.
 
 ---
 
