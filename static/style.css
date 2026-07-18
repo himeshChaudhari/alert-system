@@ -3,23 +3,23 @@
 
 /* Color Variables & Theme Tokens (ROTTLER-inspired) */
 :root {
-    --bg-main: #F5F5F5;
+    --bg-main: #f9fafb;
     --bg-card: #FFFFFF;
     --border-color: #E5E7EB;
     
     /* Brand Palette */
-    --primary: #9CCB3B;
-    --primary-hover: #7BAA2F;
-    --primary-glow: rgba(156, 203, 59, 0.15);
-    --light-green: #EAF5D3;
+    --primary: #16a34a;
+    --primary-hover: #15803d;
+    --primary-glow: rgba(22, 163, 74, 0.15);
+    --light-green: #f0fdf4;
     
     /* Text Palette */
-    --text-primary: #2D2D2D;
-    --text-secondary: #6B7280;
+    --text-primary: #111827;
+    --text-secondary: #4b5563;
     
     /* Status Palette */
-    --success: #7BAA2F;
-    --success-glow: rgba(123, 170, 47, 0.15);
+    --success: #16a34a;
+    --success-glow: rgba(22, 163, 74, 0.15);
     --warning: #D97706;
     --warning-glow: rgba(217, 119, 6, 0.15);
     --danger: #DC2626;
