@@ -140,7 +140,7 @@ def main():
 
         # Seed users
         users = [
-            ("Super Admin",   "0000000000", "[REDACTED_OLD_SUPERADMIN_EMAIL]", "[REDACTED_OLD_SUPERADMIN_PASSWORD]", "super_admin", None),
+            ("Super Admin",   "0000000000", "[REDACTED_SUPERADMIN_EMAIL]", "[REDACTED_SUPERADMIN_PASSWORD]", "super_admin", None),
             ("Store Admin",   "1111111111", "[REDACTED_ADMIN_EMAIL]",      "[REDACTED_ADMIN_PASSWORD]",      "admin",       store_id),
             ("Store Staff",   "2222222222", "[REDACTED_STAFF_EMAIL]",      "[REDACTED_STAFF_PASSWORD]",      "staff",       store_id),
             ("Jane Customer", "3333333333", "[REDACTED_CUSTOMER_EMAIL]",   "[REDACTED_CUSTOMER_PASSWORD]",   "customer",    None),
