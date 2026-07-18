@@ -853,3 +853,24 @@ SMTP Status: Sent
                         <p>Thank you for shopping with us!</p>
                         
 ==================================================
+
+[EMAIL LOG] ==================================================
+Timestamp: 2026-07-17 22:15:36
+To: shlokgharat14@gmail.com
+Subject: Alert: Your product 'Butter' is expiring in 3 day(s)!
+SMTP Status: Sent
+--------------------------------------------------
+
+                        <h2>Retail Expiry Tracker &amp; Consumer Alert System</h2>
+                        <p>Dear SHLOK GHARAT,</p>
+                        <p>This is an automated alert to notify you that the product <strong>Butter</strong> you purchased is expiring soon.</p>
+                        <p><strong>Product Details:</strong></p>
+                        <ul>
+                            <li>Product Name: Butter</li>
+                            <li>Expiry Date: 2026-07-20</li>
+                            <li>Days remaining: 3 day(s)</li>
+                        </ul>
+                        <p>Please consume or dispose of the product accordingly.</p>
+                        <p>Thank you for shopping with us!</p>
+                        
+==================================================
