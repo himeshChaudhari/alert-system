@@ -138,15 +138,33 @@ def main():
             print(f" - Store already exists, using id={store_id}")
         conn.commit()
 
-        # Seed users
+        # 1. Define required environment variables for seeding
+        required_env_vars = [
+            "SUPERADMIN_NAME", "SUPERADMIN_PHONE", "SUPERADMIN_EMAIL", "SUPERADMIN_PASSWORD",
+            "STORE_ADMIN_NAME", "STORE_ADMIN_PHONE", "STORE_ADMIN_EMAIL", "STORE_ADMIN_PASSWORD",
+            "STAFF_NAME", "STAFF_PHONE", "STAFF_EMAIL", "STAFF_PASSWORD",
+            "CUSTOMER_NAME", "CUSTOMER_PHONE", "CUSTOMER_EMAIL", "CUSTOMER_PASSWORD",
+            "CUSTOMER2_NAME", "CUSTOMER2_PHONE", "CUSTOMER2_EMAIL", "CUSTOMER2_PASSWORD"
+        ]
+        
+        # 2. Check for missing variables and notify the user with a descriptive list
+        missing_vars = [var for var in required_env_vars if not os.environ.get(var)]
+        if missing_vars:
+            print("\n[FAILURE] Missing the following required environment variables for seeding:")
+            for var in missing_vars:
+                print(f" - {var}")
+            sys.exit(1)
+
+        # 3. Construct default users list from environment variables
         users = [
-            ("Super Admin",   "0000000000", "[REDACTED_SUPERADMIN_EMAIL]", "[REDACTED_SUPERADMIN_PASSWORD]", "super_admin", None),
-            ("Store Admin",   "1111111111", "[REDACTED_ADMIN_EMAIL]",      "[REDACTED_ADMIN_PASSWORD]",      "admin",       store_id),
-            ("Store Staff",   "2222222222", "[REDACTED_STAFF_EMAIL]",      "[REDACTED_STAFF_PASSWORD]",      "staff",       store_id),
-            ("Jane Customer", "3333333333", "[REDACTED_CUSTOMER_EMAIL]",   "[REDACTED_CUSTOMER_PASSWORD]",   "customer",    None),
-            ("John Doe",      "9876543210", "[REDACTED_CUSTOMER2_EMAIL]",        "[REDACTED_CUSTOMER2_PASSWORD]",       "customer",    None),
+            (os.environ.get("SUPERADMIN_NAME"),    os.environ.get("SUPERADMIN_PHONE"),    os.environ.get("SUPERADMIN_EMAIL"),    os.environ.get("SUPERADMIN_PASSWORD"),    "super_admin", None),
+            (os.environ.get("STORE_ADMIN_NAME"),   os.environ.get("STORE_ADMIN_PHONE"),   os.environ.get("STORE_ADMIN_EMAIL"),   os.environ.get("STORE_ADMIN_PASSWORD"),   "admin",       store_id),
+            (os.environ.get("STAFF_NAME"),         os.environ.get("STAFF_PHONE"),         os.environ.get("STAFF_EMAIL"),         os.environ.get("STAFF_PASSWORD"),         "staff",       store_id),
+            (os.environ.get("CUSTOMER_NAME"),      os.environ.get("CUSTOMER_PHONE"),      os.environ.get("CUSTOMER_EMAIL"),      os.environ.get("CUSTOMER_PASSWORD"),      "customer",    None),
+            (os.environ.get("CUSTOMER2_NAME"),     os.environ.get("CUSTOMER2_PHONE"),     os.environ.get("CUSTOMER2_EMAIL"),     os.environ.get("CUSTOMER2_PASSWORD"),     "customer",    None),
         ]
 
+        # 4. Hash passwords and insert into PostgreSQL
         print("Seeding users...")
         for name, phone, email, plaintext_pw, role, sid in users:
             hashed_pw = generate_password_hash(plaintext_pw)
@@ -155,6 +173,7 @@ def main():
                 VALUES (%s, %s, %s, %s, %s, %s, TRUE)
                 ON CONFLICT (email) DO NOTHING
             """, (name, phone, email, hashed_pw, role, sid))
+            # Safe logging: only print user roles and emails, never print plaintext/hashed passwords
             print(f"   - {role:12s} | {email:30s}")
 
         conn.commit()
