@@ -15,3 +15,11 @@ seed_railway_db.py
 # Supabase CLI Binaries
 supabase.exe
 supabase-go.exe
+
+# Sensitive Configuration & Credentials
+secrets.*
+credentials.*
+config.local.*
+*.key
+*.pem
+*.pfx
