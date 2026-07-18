@@ -3,9 +3,1516 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <title>ExpiryAlert - Multi-Store Retail Inventory & Consumer Safety Platform</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --primary: #16a34a;
+            --primary-hover: #15803d;
+            --primary-light: #f0fdf4;
+            --primary-accent: #bbf7d0;
+            --dark: #111827;
+            --dark-muted: #4b5563;
+            --light: #f9fafb;
+            --white: #ffffff;
+            --border-color: #e5e7eb;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --font-outfit: 'Outfit', sans-serif;
+            --font-inter: 'Inter', sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: var(--font-inter);
+            color: var(--dark-muted);
+            background-color: var(--white);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: var(--font-outfit);
+            color: var(--dark);
+            font-weight: 700;
+        }
+
+        /* Preloader */
+        #preloader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--white);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.5s ease;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--primary-light);
+            border-top: 5px solid var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Header / Navbar */
+        header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            padding: 1.25rem 0;
+        }
+
+        header.scrolled {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            padding: 0.75rem 0;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+            border-bottom: 1px solid rgba(229, 231, 235, 0.5);
+        }
+
+        .container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        .navbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            font-family: var(--font-outfit);
+            font-size: 1.5rem;
+            font-weight: 800;
+            color: var(--dark);
+        }
+
+        .logo i {
+            color: var(--primary);
+            font-size: 1.75rem;
+        }
+
+        .nav-menu {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-link {
+            text-decoration: none;
+            color: var(--dark-muted);
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: color 0.2s ease;
+        }
+
+        .nav-link:hover {
+            color: var(--primary);
+        }
+
+        .nav-btns {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border-radius: 9999px;
+            font-family: var(--font-outfit);
+            font-weight: 600;
+            font-size: 0.95rem;
+            text-decoration: none;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            border: 1px solid transparent;
+        }
+
+        .btn-primary {
+            background-color: var(--primary);
+            color: var(--white);
+            box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+        }
+
+        .btn-primary:hover {
+            background-color: var(--primary-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(22, 163, 74, 0.3);
+        }
+
+        .btn-outline {
+            border-color: var(--border-color);
+            background-color: transparent;
+            color: var(--dark);
+        }
+
+        .btn-outline:hover {
+            border-color: var(--dark);
+            background-color: rgba(17, 24, 39, 0.02);
+            transform: translateY(-2px);
+        }
+
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .hamburger span {
+            display: block;
+            width: 25px;
+            height: 3px;
+            background-color: var(--dark);
+            border-radius: 999px;
+            transition: all 0.3s ease;
+        }
+
+        /* Hero Section */
+        .hero {
+            padding: 9.5rem 0 6rem 0;
+            background: radial-gradient(circle at 80% 20%, #f0fdf4 0%, #ffffff 60%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: rgba(22, 163, 74, 0.05);
+            border-radius: 50%;
+            filter: blur(80px);
+            top: -100px;
+            right: -100px;
+            z-index: 0;
+        }
+
+        .hero-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 0.9fr;
+            align-items: center;
+            gap: 4rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 1rem;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border: 1px solid var(--primary-accent);
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .hero-title {
+            font-size: 3.5rem;
+            line-height: 1.15;
+            margin-bottom: 1.25rem;
+            background: linear-gradient(135deg, var(--dark) 50%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-title span {
+            display: block;
+            font-size: 1.75rem;
+            color: var(--dark-muted);
+            font-weight: 500;
+            margin-top: 0.5rem;
+            background: none;
+            -webkit-text-fill-color: initial;
+        }
+
+        .hero-desc {
+            font-size: 1.15rem;
+            color: var(--dark-muted);
+            margin-bottom: 2.5rem;
+            max-width: 550px;
+        }
+
+        .hero-btns {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .hero-btns .btn {
+            font-size: 1rem;
+            padding: 0.85rem 1.75rem;
+        }
+
+        /* Hero Illustration */
+        .hero-illust {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .illust-container {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            height: 400px;
+        }
+
+        /* Glassmorphic illustration cards */
+        .glass-card {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 20px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow-lg);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .card-1 {
+            width: 280px;
+            height: 180px;
+            top: 20px;
+            left: 20px;
+            z-index: 2;
+            animation-delay: 0s;
+        }
+
+        .card-2 {
+            width: 220px;
+            height: 190px;
+            bottom: 40px;
+            right: 20px;
+            z-index: 3;
+            animation-delay: 1.5s;
+        }
+
+        .card-3 {
+            width: 160px;
+            height: 160px;
+            top: 140px;
+            left: 190px;
+            z-index: 4;
+            animation-delay: 3s;
+            background: rgba(22, 163, 74, 0.08);
+            border-color: rgba(22, 163, 74, 0.2);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        /* Card Content Mockups */
+        .mock-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .mock-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--primary);
+        }
+
+        .mock-title {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .mock-bar {
+            height: 6px;
+            background-color: var(--border-color);
+            border-radius: 99px;
+            margin-bottom: 0.5rem;
+        }
+
+        .mock-bar.w-70 { width: 70%; }
+        .mock-bar.w-50 { width: 50%; }
+        .mock-bar.w-80 { width: 80%; }
+        .mock-bar.green { background-color: var(--primary); }
+
+        .mock-qr {
+            font-size: 3.5rem;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .mock-badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 99px;
+            background-color: #fee2e2;
+            color: #ef4444;
+            font-size: 0.7rem;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        /* Section Global */
+        section {
+            padding: 6rem 0;
+            position: relative;
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 650px;
+            margin: 0 auto 4rem auto;
+        }
+
+        .section-tag {
+            font-family: var(--font-outfit);
+            color: var(--primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            font-weight: 700;
+            margin-bottom: 0.75rem;
+            display: inline-block;
+        }
+
+        .section-title {
+            font-size: 2.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .section-subtitle {
+            font-size: 1.05rem;
+            color: var(--dark-muted);
+        }
+
+        /* Features Section */
+        .features {
+            background-color: var(--light);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 2rem;
+        }
+
+        .feat-card {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feat-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary-accent);
+        }
+
+        .feat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--primary);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.3s ease;
+        }
+
+        .feat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feat-icon {
+            width: 50px;
+            height: 50px;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .feat-card:hover .feat-icon {
+            background-color: var(--primary);
+            color: var(--white);
+            transform: rotate(6deg);
+        }
+
+        .feat-title {
+            font-size: 1.2rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .feat-desc {
+            font-size: 0.9rem;
+            color: var(--dark-muted);
+            line-height: 1.5;
+        }
+
+        /* How it Works Section */
+        .workflow {
+            background-color: var(--white);
+        }
+
+        .steps-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            position: relative;
+            margin-top: 2rem;
+        }
+
+        .steps-container::before {
+            content: '';
+            position: absolute;
+            top: 40px;
+            left: 5%;
+            width: 90%;
+            height: 2px;
+            background: dashed var(--border-color);
+            z-index: 0;
+        }
+
+        .step-node {
+            width: 18%;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .step-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            background-color: var(--white);
+            border: 2px solid var(--border-color);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            font-size: 1.75rem;
+            color: var(--dark);
+            transition: all 0.3s ease;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .step-node:hover .step-icon-wrapper {
+            border-color: var(--primary);
+            color: var(--primary);
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(22, 163, 74, 0.15);
+        }
+
+        .step-num {
+            font-size: 0.8rem;
+            color: var(--primary);
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .step-title {
+            font-size: 1.05rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-desc {
+            font-size: 0.85rem;
+            color: var(--dark-muted);
+        }
+
+        /* Roles Section */
+        .roles {
+            background-color: var(--light);
+        }
+
+        .roles-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 2rem;
+        }
+
+        .role-card {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 2.5rem 2rem;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+            transition: all 0.3s ease;
+        }
+
+        .role-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary-accent);
+        }
+
+        .role-badge {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-size: 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 1.5rem auto;
+            transition: all 0.3s ease;
+        }
+
+        .role-card:hover .role-badge {
+            transform: scale(1.1);
+        }
+
+        .role-name {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        .role-desc {
+            font-size: 0.95rem;
+            color: var(--dark-muted);
+            margin-bottom: 2rem;
+            min-height: 50px;
+        }
+
+        .role-card .btn {
+            width: 100%;
+        }
+
+        /* Dashboard Preview Section */
+        .dashboard-preview {
+            background-color: var(--white);
+        }
+
+        .mockup-window {
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            box-shadow: var(--shadow-xl);
+            background-color: var(--white);
+            overflow: hidden;
+            max-width: 960px;
+            margin: 0 auto;
+        }
+
+        .mockup-header {
+            background-color: #f3f4f6;
+            padding: 0.75rem 1.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mockup-dot-red { width: 12px; height: 12px; border-radius: 50%; background-color: #ef4444; }
+        .mockup-dot-yellow { width: 12px; height: 12px; border-radius: 50%; background-color: #f59e0b; }
+        .mockup-dot-green { width: 12px; height: 12px; border-radius: 50%; background-color: #10b981; }
+
+        .mockup-body {
+            background-color: #f9fafb;
+            padding: 2rem;
+            min-height: 400px;
+        }
+
+        /* Mockup internal layout */
+        .mock-dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .mock-db-card {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .mock-db-label {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--dark-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .mock-db-value {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--dark);
+        }
+
+        .mock-db-value.green { color: var(--primary); }
+
+        .mock-db-table {
+            background-color: var(--white);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .mock-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .mock-row:last-child {
+            border-bottom: none;
+        }
+
+        /* Why Choose Section */
+        .why-choose {
+            background-color: var(--light);
+        }
+
+        .choose-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.1fr;
+            align-items: center;
+            gap: 4rem;
+        }
+
+        .choose-left img {
+            width: 100%;
+            max-width: 480px;
+            border-radius: 20px;
+        }
+
+        .choose-list {
+            list-style: none;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        .choose-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .choose-item i {
+            color: var(--primary);
+            font-size: 1.15rem;
+            margin-top: 0.2rem;
+        }
+
+        .choose-item-title {
+            font-weight: 700;
+            color: var(--dark);
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .choose-item-desc {
+            font-size: 0.85rem;
+            color: var(--dark-muted);
+        }
+
+        /* Tech Stack Section */
+        .tech-stack {
+            background-color: var(--white);
+            text-align: center;
+        }
+
+        .tech-badges {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1.25rem;
+            margin-top: 3rem;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tech-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background-color: var(--light);
+            border: 1px solid var(--border-color);
+            border-radius: 99px;
+            color: var(--dark);
+            font-weight: 600;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .tech-badge:hover {
+            background-color: var(--primary-light);
+            border-color: var(--primary-accent);
+            color: var(--primary);
+            transform: translateY(-2px);
+        }
+
+        .tech-badge i {
+            font-size: 1.15rem;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--dark);
+            color: #9ca3af;
+            padding: 5rem 0 3rem 0;
+            border-top: 1px solid #1f2937;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: 1.5fr 1fr 1fr;
+            gap: 4rem;
+            margin-bottom: 3.5rem;
+        }
+
+        .footer-brand .logo {
+            color: var(--white);
+            margin-bottom: 1.25rem;
+        }
+
+        .footer-brand p {
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+
+        .footer-title {
+            color: var(--white);
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .footer-links {
+            list-style: none;
+        }
+
+        .footer-links li {
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-links a {
+            color: #9ca3af;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.2s ease;
+        }
+
+        .footer-links a:hover {
+            color: var(--primary);
+        }
+
+        .footer-contact p {
+            font-size: 0.9rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .footer-contact a {
+            color: var(--primary);
+            text-decoration: none;
+        }
+
+        .footer-bottom {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding-top: 2rem;
+            border-top: 1px solid #1f2937;
+            font-size: 0.85rem;
+        }
+
+        /* Responsive Layouts */
+        @media (max-width: 991px) {
+            .hero-grid {
+                grid-template-columns: 1fr;
+                text-align: center;
+                gap: 3rem;
+            }
+
+            .hero-desc {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero-btns {
+                justify-content: center;
+            }
+
+            .hero-illust {
+                order: -1;
+            }
+
+            .choose-grid {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .choose-left {
+                display: flex;
+                justify-content: center;
+            }
+
+            .steps-container {
+                flex-direction: column;
+                align-items: center;
+                gap: 3rem;
+            }
+
+            .steps-container::before {
+                display: none;
+            }
+
+            .step-node {
+                width: 100%;
+                max-width: 320px;
+            }
+
+            .step-node::after {
+                content: '↓';
+                font-size: 1.75rem;
+                color: var(--primary);
+                display: block;
+                margin-top: 1.5rem;
+            }
+
+            .step-node:last-child::after {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .nav-menu, .nav-btns {
+                display: none;
+            }
+
+            .hamburger {
+                display: flex;
+            }
+
+            .hero-title {
+                font-size: 2.5rem;
+            }
+
+            .hero-title span {
+                font-size: 1.35rem;
+            }
+
+            .footer-grid {
+                grid-template-columns: 1fr;
+                gap: 3rem;
+            }
+
+            .footer-bottom {
+                flex-direction: column;
+                gap: 1rem;
+                text-align: center;
+            }
+        }
+
+        /* Scroll Reveal Utility Classes */
+        .reveal {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .reveal.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
 </head>
 <body>
-    hello shlok 
+
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header id="header">
+        <div class="container navbar">
+            <a href="/" class="logo">
+                <i class="fa-solid fa-qrcode"></i> ExpiryAlert
+            </a>
+            
+            <ul class="nav-menu">
+                <li><a href="#features" class="nav-link">Features</a></li>
+                <li><a href="#how-it-works" class="nav-link">How It Works</a></li>
+                <li><a href="#roles" class="nav-link">User Roles</a></li>
+                <li><a href="#tech-stack" class="nav-link">Technology</a></li>
+            </ul>
+
+            <div class="nav-btns">
+                <a href="/login" class="nav-link">Login</a>
+                <a href="/login" class="btn btn-primary">Get Started</a>
+            </div>
+
+            <button class="hamburger" id="hamburger-menu" aria-label="Toggle menu">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container hero-grid">
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <i class="fa-solid fa-sparkles"></i> Modern Inventory Solution
+                </div>
+                <h1 class="hero-title">
+                    ExpiryAlert
+                    <span>Multi-Store Retail Inventory & Consumer Safety Platform</span>
+                </h1>
+                <p class="hero-desc">
+                    Manage inventory, track expiry dates, automate notifications, generate invoices, and reduce product wastage across multiple stores.
+                </p>
+                <div class="hero-btns">
+                    <a href="/login" class="btn btn-primary">
+                        Get Started <i class="fa-solid fa-arrow-right"></i>
+                    </a>
+                    <a href="/customer/login" class="btn btn-outline">
+                        <i class="fa-solid fa-user"></i> Customer Login
+                    </a>
+                    <a href="/staff/login" class="btn btn-outline">
+                        <i class="fa-solid fa-user-tie"></i> Staff Login
+                    </a>
+                    <a href="/superadmin/login" class="btn btn-outline">
+                        <i class="fa-solid fa-user-shield"></i> Admin Login
+                    </a>
+                </div>
+            </div>
+
+            <div class="hero-illust">
+                <div class="illust-container">
+                    <!-- Glassmorphic Card 1: Inventory Alerts Mockup -->
+                    <div class="glass-card card-1">
+                        <div class="mock-header">
+                            <div class="mock-dot"></div>
+                            <span class="mock-title">Real-time Expiry Status</span>
+                        </div>
+                        <div class="mock-bar w-70 green"></div>
+                        <div class="mock-bar w-50"></div>
+                        <div class="mock-bar w-80"></div>
+                        <div style="display:flex; justify-content:space-between; margin-top: 1rem; align-items:center;">
+                            <span style="font-size:0.75rem; font-weight:600;">Active Alerts</span>
+                            <span class="mock-badge">3 Expiring Soon</span>
+                        </div>
+                    </div>
+
+                    <!-- Glassmorphic Card 2: Expiry Notification Mockup -->
+                    <div class="glass-card card-2">
+                        <div class="mock-header">
+                            <i class="fa-solid fa-bell" style="color:var(--primary);"></i>
+                            <span class="mock-title">SMS Notification Sent</span>
+                        </div>
+                        <p style="font-size:0.75rem; margin-bottom: 0.5rem; line-height:1.4;">
+                            "Hi John, your registered product 'Milk Pack' expires in 3 days. Visit store to claim exchange."
+                        </p>
+                        <div class="mock-bar w-80"></div>
+                        <div class="mock-bar w-50"></div>
+                    </div>
+
+                    <!-- Glassmorphic Card 3: QR Mockup -->
+                    <div class="glass-card card-3">
+                        <i class="fa-solid fa-qrcode mock-qr"></i>
+                        <span style="font-size:0.8rem; font-weight:700; color:var(--dark);">Scan to Registry</span>
+                        <div class="mock-bar w-70 green" style="margin-top:0.5rem;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-tag">Powerful Capabilities</span>
+                <h2 class="section-title">Everything You Need to Manage Inventory</h2>
+                <p class="section-subtitle">Minimize product wastage, guarantee customer safety, and automate billing processes using modern QR technology.</p>
+            </div>
+
+            <div class="features-grid">
+                <!-- Card 1 -->
+                <div class="feat-card reveal">
+                    <div class="feat-icon"><i class="fa-solid fa-qrcode"></i></div>
+                    <h3 class="feat-title">QR Product Registration</h3>
+                    <p class="feat-desc">Quickly register inventory batches using dynamically generated QR codes with exact expiry info.</p>
+                </div>
+                <!-- Card 2 -->
+                <div class="feat-card reveal">
+                    <div class="feat-icon"><i class="fa-solid fa-file-invoice-dollar"></i></div>
+                    <h3 class="feat-title">QR Billing</h3>
+                    <p class="feat-desc">Scan QR codes at checkout counters to auto-apply items, calculate total pricing, and compile invoices.</p>
+                </div>
+                <!-- Card 3 -->
+                <div class="feat-card reveal">
+                    <div class="feat-icon"><i class="fa-solid fa-store"></i></div>
+                    <h3 class="feat-title">Multi-Store Management</h3>
+                    <p class="feat-desc">Configure, monitor, and synchronize inventory metrics across multiple regional retail branch storefronts.</p>
+                </div>
+                <!-- Card 4 -->
+                <div class="feat-card reveal">
+                    <div class="feat-icon"><i class="fa-solid fa-user"></i></div>
+                    <h3 class="feat-title">Customer Portal</h3>
+                    <p class="feat-desc">Dedicated dashboard for consumers to view receipt invoices, purchase logs, and custom expiry timelines.</p>
+                </div>
+                <!-- Card 5 -->
+                <div class="feat-card reveal">
+                    <div class="feat-icon"><i class="fa-solid fa-envelope"></i></div>
+                    <h3 class="feat-title">Email Notifications</h3>
+                    <p class="feat-desc">Send automated warning email digests containing detailed lists of purchase batches approaching expiration.</p>
+                </div>
+                <!-- Card 6 -->
+                <div class="feat-card reveal">
+                    <div class="feat-icon"><i class="fa-solid fa-comment-sms"></i></div>
+                    <h3 class="feat-title">SMS Alerts</h3>
+                    <p class="feat-desc">Direct SMS text reminders to customers notifying them about batch expiries and eligible return timelines.</p>
+                </div>
+                <!-- Card 7 -->
+                <div class="feat-card reveal">
+                    <div class="feat-icon"><i class="fa-solid fa-chart-line"></i></div>
+                    <h3 class="feat-title">Dashboard Analytics</h3>
+                    <p class="feat-desc">Visualize monthly revenue, active stores, daily sales curves, and logged wastage costs in real-time.</p>
+                </div>
+                <!-- Card 8 -->
+                <div class="feat-card reveal">
+                    <div class="feat-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+                    <h3 class="feat-title">Expiry Timeline</h3>
+                    <p class="feat-desc">Keep track of which inventory batches are active, nearing alert limits, or overdue for automated clearance.</p>
+                </div>
+                <!-- Card 9 -->
+                <div class="feat-card reveal">
+                    <div class="feat-icon"><i class="fa-solid fa-file-pdf"></i></div>
+                    <h3 class="feat-title">Invoice Generation</h3>
+                    <p class="feat-desc">Generate clean PDF customer invoices automatically containing line items, price breakdowns, and tax rates.</p>
+                </div>
+                <!-- Card 10 -->
+                <div class="feat-card reveal">
+                    <div class="feat-icon"><i class="fa-solid fa-shield-halved"></i></div>
+                    <h3 class="feat-title">Secure Role-Based Access</h3>
+                    <p class="feat-desc">Restrict administrative dashboards, reports, and controls securely to authorized retail roles.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- How it Works Section -->
+    <section class="workflow" id="how-it-works">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-tag">Simplified Workflow</span>
+                <h2 class="section-title">How ExpiryAlert Works</h2>
+                <p class="section-subtitle">Five quick steps that bridge retail inventory safety with consumer notification pipelines.</p>
+            </div>
+
+            <div class="steps-container reveal">
+                <div class="step-node">
+                    <div class="step-icon-wrapper"><i class="fa-solid fa-keyboard"></i></div>
+                    <span class="step-num">Step 1</span>
+                    <h3 class="step-title">Register Product</h3>
+                    <p class="step-desc">Staff registers new stock batches with their expiry dates.</p>
+                </div>
+                <div class="step-node">
+                    <div class="step-icon-wrapper"><i class="fa-solid fa-qrcode"></i></div>
+                    <span class="step-num">Step 2</span>
+                    <h3 class="step-title">Generate QR</h3>
+                    <p class="step-desc">System yields unique batch QR code identifiers.</p>
+                </div>
+                <div class="step-node">
+                    <div class="step-icon-wrapper"><i class="fa-solid fa-barcode"></i></div>
+                    <span class="step-num">Step 3</span>
+                    <h3 class="step-title">Scan on Billing</h3>
+                    <p class="step-desc">QR code is scanned at billing counters to add items.</p>
+                </div>
+                <div class="step-node">
+                    <div class="step-icon-wrapper"><i class="fa-solid fa-file-invoice"></i></div>
+                    <span class="step-num">Step 4</span>
+                    <h3 class="step-title">Receive Invoice</h3>
+                    <p class="step-desc">Customer receives custom generated bills on email/portal.</p>
+                </div>
+                <div class="step-node">
+                    <div class="step-icon-wrapper"><i class="fa-solid fa-clock"></i></div>
+                    <span class="step-num">Step 5</span>
+                    <h3 class="step-title">Expiry Alerts</h3>
+                    <p class="step-desc">System sends automated SMS/emails before expiration.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- User Roles Section -->
+    <section class="roles" id="roles">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-tag">Tailored Experience</span>
+                <h2 class="section-title">Designed for Every User Role</h2>
+                <p class="section-subtitle">Dedicated interface profiles created to facilitate efficient operation across all organizational levels.</p>
+            </div>
+
+            <div class="roles-grid">
+                <!-- Card 1 -->
+                <div class="role-card reveal">
+                    <div class="role-badge"><i class="fa-solid fa-user-shield"></i></div>
+                    <h3 class="role-name">Super Admin</h3>
+                    <p class="role-desc">Manage regional stores, configure administrators, and inspect global analytical dashboards.</p>
+                    <a href="/superadmin/login" class="btn btn-outline">Access Platform</a>
+                </div>
+                <!-- Card 2 -->
+                <div class="role-card reveal">
+                    <div class="role-badge"><i class="fa-solid fa-store"></i></div>
+                    <h3 class="role-name">Store Admin</h3>
+                    <p class="role-desc">Manage branch inventory counts, register local staff accounts, and view wastage reports.</p>
+                    <a href="/login" class="btn btn-outline">Access Dashboard</a>
+                </div>
+                <!-- Card 3 -->
+                <div class="role-card reveal">
+                    <div class="role-badge"><i class="fa-solid fa-user-tie"></i></div>
+                    <h3 class="role-name">Store Staff</h3>
+                    <p class="role-desc">Perform batch registrations, execute billing scans, print invoices, and update stocks.</p>
+                    <a href="/staff/login" class="btn btn-outline">Access Register</a>
+                </div>
+                <!-- Card 4 -->
+                <div class="role-card reveal">
+                    <div class="role-badge"><i class="fa-solid fa-user"></i></div>
+                    <h3 class="role-name">Customer</h3>
+                    <p class="role-desc">Log in to view purchase histories, verify active product warranty periods, and check expiry timelines.</p>
+                    <a href="/customer/login" class="btn btn-outline">Access Portal</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Dashboard Preview Section -->
+    <section class="dashboard-preview">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-tag">Inside ExpiryAlert</span>
+                <h2 class="section-title">Modern & Intuitive Analytics</h2>
+                <p class="section-subtitle">A sneak-peek at our user interface designed to maximize accessibility and ease of use.</p>
+            </div>
+
+            <div class="mockup-window reveal">
+                <div class="mockup-header">
+                    <div class="mockup-dot-red"></div>
+                    <div class="mockup-dot-yellow"></div>
+                    <div class="mockup-dot-green"></div>
+                    <span style="font-size: 0.8rem; font-weight:600; margin-left: 1rem; color:var(--dark-muted)">ExpiryAlert Management Console</span>
+                </div>
+                <div class="mockup-body">
+                    <div class="mock-dashboard-grid">
+                        <div class="mock-db-card">
+                            <span class="mock-db-label">Active Branches</span>
+                            <div class="mock-db-value">3 Stores</div>
+                        </div>
+                        <div class="mock-db-card">
+                            <span class="mock-db-label">Items Registered</span>
+                            <div class="mock-db-value">1,402 Items</div>
+                        </div>
+                        <div class="mock-db-card">
+                            <span class="mock-db-label">Wastage Saved</span>
+                            <div class="mock-db-value green">24% Reduction</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mock-db-table">
+                        <h4 style="font-size: 0.95rem; margin-bottom: 1rem; font-weight:700;">Upcoming Expiration Alerts</h4>
+                        <div class="mock-row">
+                            <span style="font-size:0.85rem; font-weight:600;">Fresh Milk Batch B-2</span>
+                            <span class="mock-badge">Expires in 2 days</span>
+                        </div>
+                        <div class="mock-row">
+                            <span style="font-size:0.85rem; font-weight:600;">Organic Butter Pack</span>
+                            <span class="mock-badge" style="background-color:#fee2e2; color:#ef4444;">Expired 1 day ago</span>
+                        </div>
+                        <div class="mock-row">
+                            <span style="font-size:0.85rem; font-weight:600;">Whole Wheat Loaf</span>
+                            <span class="mock-badge" style="background-color:#fef3c7; color:#d97706;">Expires in 5 days</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why Choose Section -->
+    <section class="why-choose">
+        <div class="container choose-grid">
+            <div class="choose-left reveal">
+                <!-- CSS Based vector graphic of safe shelves -->
+                <div style="background-color: var(--primary-light); border: 2px solid var(--primary-accent); padding: 3rem; border-radius:24px; text-align:center;">
+                    <i class="fa-solid fa-store" style="font-size: 5rem; color:var(--primary); margin-bottom: 1.5rem;"></i>
+                    <h3 style="font-size:1.5rem; margin-bottom: 0.75rem;">Safer Stores</h3>
+                    <p style="font-size:0.9rem; color:var(--dark-muted);">We help store owners make sure expired products never stay on their shelves.</p>
+                </div>
+            </div>
+
+            <div class="choose-right reveal">
+                <span class="section-tag">Value Proposition</span>
+                <h2 class="section-title" style="margin-bottom: 2rem;">Why Retailers Choose Us</h2>
+                
+                <ul class="choose-list">
+                    <li class="choose-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>
+                            <h4 class="choose-item-title">Reduce Wastage</h4>
+                            <p class="choose-item-desc">Clear nearing-expiry products before they spoil.</p>
+                        </div>
+                    </li>
+                    <li class="choose-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>
+                            <h4 class="choose-item-title">Customer Safety</h4>
+                            <p class="choose-item-desc">Prevent accidental sellout of expired goods.</p>
+                        </div>
+                    </li>
+                    <li class="choose-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>
+                            <h4 class="choose-item-title">Centralized Control</h4>
+                            <p class="choose-item-desc">Monitor multiple locations in a single login.</p>
+                        </div>
+                    </li>
+                    <li class="choose-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>
+                            <h4 class="choose-item-title">Faster Billing</h4>
+                            <p class="choose-item-desc">Instant checkouts using simple QR scanning.</p>
+                        </div>
+                    </li>
+                    <li class="choose-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>
+                            <h4 class="choose-item-title">QR Automation</h4>
+                            <p class="choose-item-desc">Say goodbye to manual date entries.</p>
+                        </div>
+                    </li>
+                    <li class="choose-item">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <div>
+                            <h4 class="choose-item-title">Automated Alerts</h4>
+                            <p class="choose-item-desc">Scheduler jobs handle customer notifications.</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Technology Stack Section -->
+    <section class="tech-stack" id="tech-stack">
+        <div class="container">
+            <div class="section-header reveal">
+                <span class="section-tag">Robust Architecture</span>
+                <h2 class="section-title">The Technology Behind ExpiryAlert</h2>
+                <p class="section-subtitle">Built on reliable and standard industrial technologies to guarantee fast, resilient runtime execution.</p>
+            </div>
+
+            <div class="tech-badges reveal">
+                <div class="tech-badge"><i class="fa-brands fa-python"></i> Flask</div>
+                <div class="tech-badge"><i class="fa-solid fa-database"></i> PostgreSQL</div>
+                <div class="tech-badge"><i class="fa-brands fa-bootstrap"></i> Bootstrap</div>
+                <div class="tech-badge"><i class="fa-brands fa-square-js"></i> JavaScript</div>
+                <div class="tech-badge"><i class="fa-brands fa-html5"></i> HTML5</div>
+                <div class="tech-badge"><i class="fa-brands fa-css3-alt"></i> CSS3</div>
+                <div class="tech-badge"><i class="fa-solid fa-qrcode"></i> QR Code</div>
+                <div class="tech-badge"><i class="fa-solid fa-envelope"></i> SMTP Email</div>
+                <div class="tech-badge"><i class="fa-solid fa-comment-sms"></i> SMS API</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container footer-grid">
+            <div class="footer-brand">
+                <a href="/" class="logo">
+                    <i class="fa-solid fa-qrcode"></i> ExpiryAlert
+                </a>
+                <p style="margin-top: 1rem;">
+                    Made for modern retail inventory management. Track expiration timelines, reduce product wastage, and keep your customers safe automatically.
+                </p>
+            </div>
+
+            <div>
+                <h4 class="footer-title">Navigation</h4>
+                <ul class="footer-links">
+                    <li><a href="#features">Features</a></li>
+                    <li><a href="#how-it-works">How It Works</a></li>
+                    <li><a href="#roles">User Roles</a></li>
+                    <li><a href="#tech-stack">Tech Stack</a></li>
+                </ul>
+            </div>
+
+            <div class="footer-contact">
+                <h4 class="footer-title">Contact & Support</h4>
+                <p>Have questions? Reach out to us:</p>
+                <p><i class="fa-solid fa-envelope"></i> <a href="mailto:support@expiryalert.com">support@expiryalert.com</a></p>
+                <p style="margin-top: 1.5rem;">
+                    <a href="https://github.com/himeshChaudhari/alert-system" class="btn btn-outline" style="color:var(--white); border-color:#374151; font-size:0.85rem; padding: 0.5rem 1.25rem;">
+                        <i class="fa-brands fa-github"></i> GitHub Code
+                    </a>
+                </p>
+            </div>
+        </div>
+
+        <div class="container footer-bottom">
+            <p>&copy; 2026 ExpiryAlert - Retail Inventory & Consumer Safety Platform. All rights reserved.</p>
+            <p>Made with <i class="fa-solid fa-heart" style="color:var(--primary);"></i> for Retail Inventory Optimization</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            // Hide Preloader
+            const preloader = document.getElementById('preloader');
+            if (preloader) {
+                preloader.style.opacity = '0';
+                setTimeout(() => {
+                    preloader.style.display = 'none';
+                }, 500);
+            }
+
+            // Sticky Header
+            const header = document.getElementById('header');
+            window.addEventListener('scroll', function() {
+                if (window.scrollY > 50) {
+                    header.classList.add('scrolled');
+                } else {
+                    header.classList.remove('scrolled');
+                }
+            });
+
+            // Mobile Menu Toggle
+            const hamburger = document.getElementById('hamburger-menu');
+            const navMenu = document.querySelector('.nav-menu');
+            if (hamburger && navMenu) {
+                hamburger.addEventListener('click', function() {
+                    hamburger.classList.toggle('active');
+                    // Toggle nav menu display on mobile
+                    if (navMenu.style.display === 'flex') {
+                        navMenu.style.display = 'none';
+                    } else {
+                        navMenu.style.display = 'flex';
+                        navMenu.style.flexDirection = 'column';
+                        navMenu.style.position = 'absolute';
+                        navMenu.style.top = '100%';
+                        navMenu.style.left = '0';
+                        navMenu.style.width = '100%';
+                        navMenu.style.backgroundColor = 'var(--white)';
+                        navMenu.style.padding = '1.5rem';
+                        navMenu.style.boxShadow = 'var(--shadow-lg)';
+                        navMenu.style.gap = '1.5rem';
+                    }
+                });
+            }
+
+            // Scroll Reveal Animation
+            const revealElements = document.querySelectorAll('.reveal');
+            const revealOnScroll = function() {
+                for (let i = 0; i < revealElements.length; i++) {
+                    const windowHeight = window.innerHeight;
+                    const elementTop = revealElements[i].getBoundingClientRect().top;
+                    const elementVisible = 100;
+                    if (elementTop < windowHeight - elementVisible) {
+                        revealElements[i].classList.add('active');
+                    }
+                }
+            };
+            window.addEventListener('scroll', revealOnScroll);
+            revealOnScroll(); // Initial check
+        });
+    </script>
 </body>
 </html>
