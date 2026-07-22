@@ -23,17 +23,22 @@
 
     <!-- Invoice Header -->
     <div class="invoice-header" style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border-color); margin-bottom: 1.5rem;">
-        <div>
-            <h2 style="margin-bottom: 0.25rem; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px;">
-                <i class="fa-solid fa-qrcode" style="color: var(--primary); margin-right: 0.25rem;"></i>
-                {{ bill.store_name or 'ExpiryPilot Smart Retail' }}
-            </h2>
-            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem;">
-                QR-Based Retail Expiry Tracking &amp; Consumer Alert System
-            </p>
-            <p style="color: var(--text-secondary); font-size: 0.8rem;">
-                <i class="fa-solid fa-location-dot"></i> {{ bill.store_address or '123 Retail Avenue, Commerce District, Mumbai — 400001' }}
-            </p>
+        <div style="display: flex; align-items: center; gap: 0.85rem;">
+            <!-- Top-Left Company Logo (Requirement 16) -->
+            <div class="company-logo" style="width: 50px; height: 50px; border-radius: var(--radius-sm); background: rgba(22, 163, 74, 0.1); border: 1px solid rgba(22, 163, 74, 0.2); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0;">
+                <i class="fa-solid fa-store"></i>
+            </div>
+            <div>
+                <h2 style="margin-bottom: 0.15rem; font-size: 1.6rem; font-weight: 700; letter-spacing: -0.5px;">
+                    {{ bill.store_name or 'ExpiryPilot Smart Retail' }}
+                </h2>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.25rem;">
+                    QR-Based Retail Expiry Tracking &amp; Consumer Alert System
+                </p>
+                <p style="color: var(--text-secondary); font-size: 0.8rem; margin: 0;">
+                    <i class="fa-solid fa-location-dot"></i> {{ bill.store_address or '123 Retail Avenue, Commerce District, Mumbai — 400001' }}
+                </p>
+            </div>
         </div>
         <div style="text-align: right;">
             <span class="badge success" style="font-size: 0.85rem; padding: 0.35rem 0.8rem;">
@@ -130,17 +135,38 @@
         </table>
     </div>
 
-    <!-- Thank You Footer -->
-    <div style="text-align: center; margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color);">
-        <div style="margin-bottom: 0.75rem;">
-            <i class="fa-solid fa-heart" style="color: var(--danger); font-size: 1.1rem;"></i>
+    <!-- Invoice Bottom Section: Customer Portal Note & Dynamic QR Code (Requirements 3, 4, 15, 17) -->
+    <div class="invoice-qr-section" style="display: flex; justify-content: space-between; align-items: flex-end; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px dashed var(--border-color); gap: 1.5rem;">
+        <!-- Left Side: Scan Info Note (Requirement 17) -->
+        <div class="qr-info-note" style="flex: 1; max-width: 480px;">
+            <div style="font-weight: 700; font-size: 0.88rem; color: var(--text-primary); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem;">
+                <i class="fa-solid fa-qrcode" style="color: var(--primary);"></i>
+                Scan this QR to:
+            </div>
+            <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.82rem; color: var(--text-secondary); line-height: 1.6; list-style-type: disc;">
+                <li>View your purchase history</li>
+                <li>Track product expiry</li>
+                <li>Receive expiry alerts</li>
+                <li>Login to your customer portal</li>
+            </ul>
         </div>
-        <p style="font-size: 1.05rem; font-weight: 600; margin-bottom: 0.25rem;">Thank You for Shopping with Us!</p>
-        <p style="font-size: 0.8rem; color: var(--text-secondary);">
-            We appreciate your business. For any queries, please contact our support team.
+
+        <!-- Right Side: Dynamic QR Code Display (Requirements 3, 4, 6, 14, 15) -->
+        <div class="qr-code-box" style="text-align: center; background: #ffffff; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 0.75rem 1rem; box-shadow: 0 2px 6px rgba(0,0,0,0.03); flex-shrink: 0;">
+            <img src="{{ portal_qr_b64 }}" alt="Scan to access ExpiryPilot" style="width: 110px; height: 110px; display: block; margin: 0 auto 0.4rem; image-rendering: crisp-edges;">
+            <div style="font-size: 0.78rem; font-weight: 700; color: var(--text-primary); letter-spacing: -0.2px;">
+                Scan to access ExpiryPilot
+            </div>
+        </div>
+    </div>
+
+    <!-- Small Footer (Requirement 5) -->
+    <div class="invoice-footer" style="text-align: center; margin-top: 1.75rem; padding-top: 1rem; border-top: 1px solid var(--border-color);">
+        <p style="font-size: 0.85rem; font-weight: 700; color: var(--text-primary); margin-bottom: 0.2rem;">
+            Powered by ExpiryPilot
         </p>
-        <p style="font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.75rem; font-style: italic;">
-            <i class="fa-solid fa-shield-halved"></i> Powered by ExpiryPilot Smart Retail — Ensuring Freshness, Always.
+        <p style="font-size: 0.75rem; color: var(--text-secondary); margin: 0;">
+            Smart Retail Management Platform
         </p>
     </div>
 </div>
@@ -200,13 +226,19 @@
         #invoice-container span,
         #invoice-container td,
         #invoice-container th,
+        #invoice-container li,
         #invoice-container div {
             color: #000000 !important;
             -webkit-text-fill-color: #000000 !important;
         }
 
-        /* Invoice header icon — keep brand color for PDF */
-        #invoice-container h2 i {
+        /* Invoice header logo icon */
+        #invoice-container .company-logo {
+            background: #f0fdf4 !important;
+            border: 1px solid #bbf7d0 !important;
+        }
+        #invoice-container h2 i,
+        #invoice-container .company-logo i {
             color: #16a34a !important;
             -webkit-text-fill-color: #16a34a !important;
         }
@@ -260,15 +292,31 @@
             border: 1px solid #6ee7b7 !important;
         }
 
-        /* Thank you section dashed border */
-        #invoice-container div[style*="border-top: 1px dashed"] {
-            border-top: 1px dashed #d1d5db !important;
+        /* QR Code & Footer Print Rules */
+        .invoice-qr-section {
+            display: flex !important;
+            justify-content: space-between !important;
+            align-items: flex-end !important;
+            border-top: 1px dashed #cccccc !important;
+            page-break-inside: avoid;
         }
 
-        /* Heart icon keeps color */
-        .fa-heart {
-            color: #ef4444 !important;
-            -webkit-text-fill-color: #ef4444 !important;
+        .qr-code-box {
+            border: 1px solid #333333 !important;
+            background: #ffffff !important;
+            box-shadow: none !important;
+            page-break-inside: avoid;
+        }
+
+        .qr-code-box img {
+            width: 110px !important;
+            height: 110px !important;
+            display: block !important;
+        }
+
+        .invoice-footer {
+            border-top: 1px solid #e5e7eb !important;
+            page-break-inside: avoid;
         }
 
         /* Page settings */

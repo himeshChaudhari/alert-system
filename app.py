@@ -21,14 +21,15 @@ sys.modules['MySQLdb'] = MySQLdbMock
 sys.modules['MySQLdb.cursors'] = MySQLdbMock.cursors
 import MySQLdb.cursors
 from werkzeug.security import generate_password_hash, check_password_hash
-import os
+import base64
+import io
 import datetime
 import qrcode
 from apscheduler.schedulers.background import BackgroundScheduler
 import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-from functools import wraps
+from functools import wraps, lru_cache
 import requests
 from dotenv import load_dotenv
 from flask_wtf.csrf import CSRFProtect
@@ -39,6 +40,29 @@ base_dir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(base_dir, '.env'))
 
 app = Flask(__name__)
+
+@lru_cache(maxsize=1)
+def get_portal_qr_base64(url="https://expirypilot-one.vercel.app/"):
+    """Generates a high-resolution base64 PNG Data URI for the portal URL, cached in memory."""
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=10,
+        border=2,
+    )
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    img_io = io.BytesIO()
+    img.save(img_io, 'PNG')
+    img_io.seek(0)
+    b64_str = base64.b64encode(img_io.getvalue()).decode('utf-8')
+    return f"data:image/png;base64,{b64_str}"
+
+@app.context_processor
+def inject_portal_qr():
+    return dict(portal_qr_b64=get_portal_qr_base64())
 
 # CSRF Protection
 csrf = CSRFProtect(app)
@@ -1265,9 +1289,8 @@ def view_bill(bill_id):
         ORDER BY pur.id ASC
     """, (bill_id,))
     items = cur.fetchall()
-    cur.close()
-    
-    return render_template('bill_invoice.html', bill=bill, items=items)
+    portal_qr_b64 = get_portal_qr_base64()
+    return render_template('bill_invoice.html', bill=bill, items=items, portal_qr_b64=portal_qr_b64)
 
 @app.route('/staff/write-off/<int:product_id>', methods=['POST'])
 @login_required
