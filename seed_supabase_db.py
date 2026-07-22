@@ -85,6 +85,8 @@ def main():
                 quantity      INT DEFAULT 1,
                 unit_price    DECIMAL(10,2) NOT NULL DEFAULT 0.00,
                 bill_id       INT NULL,
+                is_consumed   BOOLEAN NOT NULL DEFAULT FALSE,
+                consumed_at   TIMESTAMP DEFAULT NULL,
                 FOREIGN KEY (customer_id) REFERENCES users(id),
                 FOREIGN KEY (product_id)  REFERENCES products(id),
                 FOREIGN KEY (bill_id)     REFERENCES bills(id)

@@ -106,14 +106,46 @@
 
 <!-- Actual Content Wrapper (Fades In) -->
 <div class="content-wrapper">
-    <div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <div>
             <h1>My Product Expiry Dashboard</h1>
-            <p class="subtitle" style="margin-bottom: 0;">Keep track of your purchased grocery and retail items' expiry timelines.</p>
+            <p class="subtitle" style="margin-bottom: 0;">Track your purchased items, monitor expiry timelines, and mark consumed products.</p>
         </div>
         <a href="{{ url_for('customer_bills') }}" class="btn btn-secondary">
             <i class="fa-solid fa-file-invoice-dollar"></i> My Bills &amp; Invoices
         </a>
+    </div>
+
+    <!-- Summary Stats Bar -->
+    <div class="grid-4" style="margin-bottom: 2rem;">
+        <div class="card stat-card" style="padding: 1.25rem;">
+            <div class="stat-icon" style="background: rgba(22, 163, 74, 0.1); color: var(--primary);"><i class="fa-solid fa-basket-shopping"></i></div>
+            <div>
+                <div class="stat-value" style="font-size: 1.5rem;">{{ total_purchases }}</div>
+                <div class="stat-label">Total Purchased Items</div>
+            </div>
+        </div>
+        <div class="card stat-card" style="padding: 1.25rem;">
+            <div class="stat-icon" style="background: rgba(22, 163, 74, 0.15); color: #16a34a;"><i class="fa-solid fa-clock font-lg"></i></div>
+            <div>
+                <div class="stat-value" style="font-size: 1.5rem;">{{ active_count }}</div>
+                <div class="stat-label">Active Tracking</div>
+            </div>
+        </div>
+        <div class="card stat-card" style="padding: 1.25rem;">
+            <div class="stat-icon" style="background: rgba(148, 163, 184, 0.2); color: #64748b;"><i class="fa-solid fa-circle-check"></i></div>
+            <div>
+                <div class="stat-value" style="font-size: 1.5rem;">{{ consumed_count }}</div>
+                <div class="stat-label">Consumed Products</div>
+            </div>
+        </div>
+        <div class="card stat-card" style="padding: 1.25rem;">
+            <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div>
+                <div class="stat-value" style="font-size: 1.5rem;">{{ expired_count }}</div>
+                <div class="stat-label">Expired Products</div>
+            </div>
+        </div>
     </div>
 
     <div class="grid-2">
@@ -129,32 +161,60 @@
                     <div class="timeline">
                         {% for item in timeline %}
                             <div class="timeline-item">
-                                <!-- Assign dot color based on urgency -->
-                                {% if item.days_remaining <= 1 %}
+                                <!-- Assign dot color based on status & urgency -->
+                                {% if item.is_consumed %}
+                                    <div class="timeline-dot" style="background: #94a3b8; border: 3px solid #cbd5e1;"></div>
+                                {% elif item.days_remaining < 0 %}
+                                    <div class="timeline-dot danger"></div>
+                                {% elif item.days_remaining <= 1 %}
                                     <div class="timeline-dot danger"></div>
                                 {% elif item.days_remaining <= 3 %}
                                     <div class="timeline-dot warning"></div>
                                 {% else %}
                                     <div class="timeline-dot success"></div>
                                 {% endif %}
+                                
                                 <div class="timeline-content">
                                     <div class="timeline-info">
-                                        <h4>{{ item.product_name }} <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-secondary);">({{ "%.2f"|format(item.pack_size)|replace(".00", "") }} {{ item.unit|title }} Pack)</span> <span style="font-size: 0.85rem; font-weight: normal; color: var(--text-secondary);">x{{ item.quantity if item.quantity is not none else 1 }}</span></h4>
+                                        <h4 style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                            <span>{{ item.product_name }}</span>
+                                            <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-secondary);">({{ "%.2f"|format(item.pack_size)|replace(".00", "") }} {{ item.unit|title }})</span>
+                                            <span style="font-size: 0.85rem; font-weight: 600; color: var(--primary);">x{{ item.quantity if item.quantity is not none else 1 }}</span>
+                                        </h4>
                                         <p>Purchased: {{ item.purchase_date }}</p>
                                         <p style="font-size: 0.8rem; margin-top: 0.2rem; color: var(--text-secondary);">
                                             Expires: <span style="font-family: monospace;">{{ item.expiry_date }}</span>
                                         </p>
                                     </div>
                                     
-                                    <div>
-                                        {% if item.days_remaining < 0 %}
-                                            <span class="badge danger">Expired</span>
-                                        {% elif item.days_remaining <= 1 %}
-                                            <span class="badge danger">Expires Tomorrow!</span>
-                                        {% elif item.days_remaining <= 3 %}
-                                            <span class="badge warning">{{ item.days_remaining }} Days Left</span>
+                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
+                                        <!-- Requirement 6: Display three status badges (Active, Consumed, Expired) -->
+                                        {% if item.is_consumed %}
+                                            <span class="badge secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);">
+                                                <i class="fa-solid fa-circle-check"></i> Consumed
+                                            </span>
+                                            <button type="button" class="btn btn-secondary btn-sm" disabled style="opacity: 0.6; cursor: not-allowed; font-size: 0.75rem; padding: 0.25rem 0.55rem;">
+                                                <i class="fa-solid fa-check"></i> Consumed
+                                            </button>
+                                        {% elif item.days_remaining < 0 %}
+                                            <span class="badge danger"><i class="fa-solid fa-circle-xmark"></i> Expired</span>
+                                            <!-- Requirement 7: Cannot mark expired product as consumed -->
+                                            <button type="button" class="btn btn-secondary btn-sm" disabled title="Expired products cannot be marked as consumed" style="opacity: 0.5; cursor: not-allowed; font-size: 0.75rem; padding: 0.25rem 0.55rem;">
+                                                <i class="fa-solid fa-ban"></i> Expired
+                                            </button>
                                         {% else %}
-                                            <span class="badge success">{{ item.days_remaining }} Days Left</span>
+                                            {% if item.days_remaining <= 1 %}
+                                                <span class="badge danger">Expires Tomorrow!</span>
+                                            {% elif item.days_remaining <= 3 %}
+                                                <span class="badge warning">{{ item.days_remaining }} Days Left</span>
+                                            {% else %}
+                                                <span class="badge success">{{ item.days_remaining }} Days Left</span>
+                                            {% endif %}
+                                            
+                                            <!-- Requirement 1 & 2: Mark as consumed action with confirmation -->
+                                            <button type="button" class="btn btn-outline btn-sm" onclick="confirmMarkConsumed({{ item.purchase_id }}, '{{ item.product_name|escape }}')" style="font-size: 0.75rem; padding: 0.28rem 0.6rem; border-color: rgba(22, 163, 74, 0.5); color: var(--primary); font-weight: 600;">
+                                                <i class="fa-solid fa-utensils"></i> Mark as Consumed
+                                            </button>
                                         {% endif %}
                                     </div>
                                 </div>
@@ -171,28 +231,91 @@
             </div>
         </div>
         
-        <!-- Right Column: Personal Alert Log -->
-        <div>
+        <!-- Right Column: Purchase History & Personal Alert Log -->
+        <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+            <!-- Purchase History Table -->
             <div class="card">
-                <h3 class="card-title">
-                    <i class="fa-regular fa-envelope-open" style="color: var(--warning);"></i>
-                    My Notification History
+                <h3 class="card-title" style="margin-bottom: 1rem;">
+                    <i class="fa-solid fa-basket-shopping" style="color: var(--primary);"></i>
+                    Purchase History &amp; Consumption Status
                 </h3>
                 
-                <div class="table-wrapper" style="max-height: 450px; overflow-y: auto;">
+                <div class="table-wrapper" style="max-height: 360px; overflow-y: auto;">
+                    {% if timeline %}
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Purchase Date</th>
+                                    <th>Expiry Date</th>
+                                    <th>Status</th>
+                                    <th style="text-align: right;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in timeline %}
+                                    <tr>
+                                        <td>
+                                            <strong>{{ item.product_name }}</strong>
+                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">
+                                                {{ "%.2f"|format(item.pack_size)|replace(".00", "") }} {{ item.unit|title }} (x{{ item.quantity if item.quantity is not none else 1 }})
+                                            </div>
+                                        </td>
+                                        <td><span style="font-family: monospace; font-size: 0.82rem;">{{ item.purchase_date }}</span></td>
+                                        <td><span style="font-family: monospace; font-size: 0.82rem;">{{ item.expiry_date }}</span></td>
+                                        <td>
+                                            {% if item.is_consumed %}
+                                                <span class="badge secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); font-size: 0.7rem;">Consumed</span>
+                                            {% elif item.days_remaining < 0 %}
+                                                <span class="badge danger" style="font-size: 0.7rem;">Expired</span>
+                                            {% else %}
+                                                <span class="badge success" style="font-size: 0.7rem;">Active</span>
+                                            {% endif %}
+                                        </td>
+                                        <td style="text-align: right;">
+                                            {% if item.is_consumed %}
+                                                <span style="font-size: 0.75rem; color: var(--text-secondary);"><i class="fa-solid fa-circle-check"></i> Consumed</span>
+                                            {% elif item.days_remaining < 0 %}
+                                                <span style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.7;">Expired</span>
+                                            {% else %}
+                                                <button type="button" class="btn btn-outline btn-sm" onclick="confirmMarkConsumed({{ item.purchase_id }}, '{{ item.product_name|escape }}')" style="font-size: 0.72rem; padding: 0.22rem 0.5rem; font-weight: 600;">
+                                                    Mark Consumed
+                                                </button>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    {% else %}
+                        <div style="text-align: center; padding: 2.5rem 0; color: var(--text-secondary);">
+                            <p style="font-size: 0.85rem;">No purchases found.</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Notification History Card -->
+            <div class="card">
+                <h3 class="card-title" style="margin-bottom: 1rem;">
+                    <i class="fa-regular fa-envelope-open" style="color: var(--warning);"></i>
+                    Notification History
+                </h3>
+                
+                <div class="table-wrapper" style="max-height: 280px; overflow-y: auto;">
                     {% if notifications %}
                         <table>
                             <thead>
                                 <tr>
-                                    <th>Date Received</th>
+                                    <th>Date</th>
                                     <th>Product</th>
-                                    <th>Warning Level</th>
+                                    <th>Warning</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for n in notifications %}
                                     <tr>
-                                        <td><span style="font-family: monospace; font-size: 0.85rem;">{{ n.alert_sent_date }}</span></td>
+                                        <td><span style="font-family: monospace; font-size: 0.82rem;">{{ n.alert_sent_date }}</span></td>
                                         <td>
                                             <strong>{{ n.product_name }}</strong>
                                             <div style="font-size: 0.75rem; color: var(--text-secondary);">Expiry: {{ n.expiry_date }}</div>
@@ -207,10 +330,10 @@
                             </tbody>
                         </table>
                     {% else %}
-                        <div style="text-align: center; padding: 4rem 0; color: var(--text-secondary);">
-                            <i class="fa-regular fa-bell-slash" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.4;"></i>
-                            <p>No notifications received yet.</p>
-                            <p style="font-size: 0.8rem; margin-top: 0.5rem;">You will receive alerts 7, 3, and 1 day before products expire.</p>
+                        <div style="text-align: center; padding: 2rem 0; color: var(--text-secondary);">
+                            <i class="fa-regular fa-bell-slash" style="font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4;"></i>
+                            <p style="font-size: 0.85rem;">No notifications received yet.</p>
+                            <p style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem;">Alerts are sent 7, 3, and 1 day before product expiry for active items.</p>
                         </div>
                     {% endif %}
                 </div>
@@ -218,4 +341,50 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function confirmMarkConsumed(purchaseId, productName) {
+    // Requirement 2: Display confirmation dialog before updating
+    const confirmMsg = `Have you already consumed "${productName}"?\n\nYou will no longer receive expiry reminders for this item.`;
+    if (confirm(confirmMsg)) {
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+        
+        fetch(`/customer/mark-consumed/${purchaseId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRFToken': csrfToken
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Reload page to update status badges, stats cards, and timeline
+                window.location.reload();
+            } else {
+                alert(data.message || 'Could not update consumption status.');
+            }
+        })
+        .catch(err => {
+            console.error('Error marking product as consumed:', err);
+            // Fallback form submission
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = `/customer/mark-consumed/${purchaseId}`;
+            
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = 'csrf_token';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+            
+            document.body.appendChild(form);
+            form.submit();
+        });
+    }
+}
+</script>
 {% endblock %}

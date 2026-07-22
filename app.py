@@ -200,6 +200,25 @@ class PostgreSQL:
 # Keep instance variable named mysql to ensure drop-in compatibility
 mysql = PostgreSQL(app)
 
+def ensure_consumption_columns():
+    """Auto-verifies that purchases table contains is_consumed and consumed_at columns."""
+    db_url = os.environ.get('DATABASE_URL')
+    if not db_url:
+        return
+    try:
+        conn = psycopg2.connect(db_url)
+        cur = conn.cursor()
+        cur.execute("ALTER TABLE purchases ADD COLUMN IF NOT EXISTS is_consumed BOOLEAN DEFAULT FALSE;")
+        cur.execute("ALTER TABLE purchases ADD COLUMN IF NOT EXISTS consumed_at TIMESTAMP DEFAULT NULL;")
+        conn.commit()
+        cur.close()
+        conn.close()
+        print("[DATABASE] Verified consumption tracking columns on 'purchases' table.")
+    except Exception as e:
+        print(f"[DATABASE NOTICE] Consumption columns status: {e}")
+
+ensure_consumption_columns()
+
 # Email Settings (Modify these for real SMTP servers like Gmail, Mailtrap, etc.)
 SMTP_HOST = os.environ.get('SMTP_HOST')
 SMTP_PORT = int(os.environ.get('SMTP_PORT', 587))
@@ -1871,19 +1890,26 @@ def customer_dashboard():
     customer_id = session['user_id']
     cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
     
-    # 1. Personal expiry timeline (purchased products sorted by expiry_date)
+    # 1. Personal expiry timeline & purchase items with consumption status
     today = datetime.date.today()
     cur.execute("""
-        SELECT pur.purchase_date, p.name AS product_name, p.expiry_date,
+        SELECT pur.id AS purchase_id, pur.purchase_date, pur.quantity,
+               pur.is_consumed, pur.consumed_at,
+               p.name AS product_name, p.expiry_date,
                p.pack_size, p.unit,
-               pur.quantity,
                (p.expiry_date - %s) AS days_remaining
         FROM purchases pur
         JOIN products p ON pur.product_id = p.id
         WHERE pur.customer_id = %s
-        ORDER BY p.expiry_date ASC
+        ORDER BY pur.is_consumed ASC, p.expiry_date ASC, pur.id DESC
     """, (today, customer_id))
     timeline = cur.fetchall()
+    
+    # Compute summary stats for badges & cards
+    total_purchases = len(timeline)
+    active_count = sum(1 for item in timeline if not item.get('is_consumed') and item['days_remaining'] >= 0)
+    consumed_count = sum(1 for item in timeline if item.get('is_consumed'))
+    expired_count = sum(1 for item in timeline if not item.get('is_consumed') and item['days_remaining'] < 0)
     
     # 2. Customer Notification History
     cur.execute("""
@@ -1896,7 +1922,82 @@ def customer_dashboard():
     notifications = cur.fetchall()
     
     cur.close()
-    return render_template('customer_dashboard.html', timeline=timeline, notifications=notifications)
+    return render_template(
+        'customer_dashboard.html',
+        timeline=timeline,
+        notifications=notifications,
+        total_purchases=total_purchases,
+        active_count=active_count,
+        consumed_count=consumed_count,
+        expired_count=expired_count
+    )
+
+
+@app.route('/customer/mark-consumed/<int:purchase_id>', methods=['POST'])
+@login_required
+@role_required(['customer'])
+def mark_product_consumed(purchase_id):
+    """Marks an active purchased item as consumed by the customer."""
+    customer_id = session['user_id']
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    # Fetch purchase and linked product details
+    cur.execute("""
+        SELECT pur.id, pur.customer_id, pur.is_consumed, pur.consumed_at,
+               p.name AS product_name, p.expiry_date
+        FROM purchases pur
+        JOIN products p ON pur.product_id = p.id
+        WHERE pur.id = %s AND pur.customer_id = %s
+    """, (purchase_id, customer_id))
+    
+    purchase = cur.fetchone()
+    
+    if not purchase:
+        cur.close()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': False, 'message': 'Purchased item not found under your account.'}), 404
+        flash('Purchased item not found under your account.', 'danger')
+        return redirect(url_for('customer_dashboard'))
+        
+    # Check if already consumed
+    if purchase.get('is_consumed'):
+        cur.close()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': False, 'message': f"'{purchase['product_name']}' is already marked as consumed."}), 400
+        flash(f"'{purchase['product_name']}' is already marked as consumed.", 'info')
+        return redirect(url_for('customer_dashboard'))
+        
+    # Check if product is already expired (Requirement 7: expired products cannot be marked as consumed)
+    today = datetime.date.today()
+    if purchase['expiry_date'] < today:
+        cur.close()
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+            return jsonify({'success': False, 'message': 'Expired products cannot be marked as consumed.'}), 400
+        flash('Expired products cannot be marked as consumed.', 'warning')
+        return redirect(url_for('customer_dashboard'))
+        
+    # Update status to consumed with current timestamp (Requirement 3)
+    now = datetime.datetime.now()
+    cur.execute("""
+        UPDATE purchases
+        SET is_consumed = TRUE, consumed_at = %s
+        WHERE id = %s AND customer_id = %s
+    """, (now, purchase_id, customer_id))
+    mysql.connection.commit()
+    cur.close()
+    
+    msg = f"'{purchase['product_name']}' marked as consumed. You will no longer receive expiry reminders for this item."
+    
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest' or request.is_json:
+        return jsonify({
+            'success': True,
+            'message': msg,
+            'purchase_id': purchase_id,
+            'consumed_at': now.strftime('%Y-%m-%d %H:%M:%S')
+        })
+        
+    flash(msg, 'success')
+    return redirect(url_for('customer_dashboard'))
 
 
 # ================= DAILY SCHEDULER & ALERT FUNCTION =================
@@ -1905,6 +2006,7 @@ def run_expiry_alerts_check():
     """
     Main job that checks for purchased products that are 7, 3, or 1 days away from expiry
     and emails the customer and admin, recording the result in alerts_log.
+    Skips products marked as consumed.
     """
     print("[SCHEDULER] Running daily retail expiry alerts check...")
     
@@ -1924,7 +2026,7 @@ def run_expiry_alerts_check():
         for interval in alert_intervals:
             target_date = today + datetime.timedelta(days=interval)
             
-            # Find purchases where the product's expiry_date is exactly target_date
+            # Find purchases where product's expiry_date is target_date and product is NOT consumed
             cursor.execute("""
                 SELECT pur.id AS purchase_id, pur.customer_id, pur.product_id,
                        c.name AS customer_name, c.email AS customer_email, c.phone AS customer_phone,
@@ -1933,6 +2035,7 @@ def run_expiry_alerts_check():
                 JOIN users c ON pur.customer_id = c.id
                 JOIN products p ON pur.product_id = p.id
                 WHERE p.expiry_date = %s
+                  AND (pur.is_consumed IS FALSE OR pur.is_consumed IS NULL)
             """, (target_date,))
             
             due_purchases = cursor.fetchall()
