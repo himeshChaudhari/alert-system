@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}My Account Profile - ExpiryPilot{% endblock %}
+
+{% block content %}
+<!-- Skeleton Loading State -->
+<div class="skeleton-wrapper">
+    <div class="skeleton" style="height: 100px; margin-bottom: 1.5rem; border-radius: 16px;"></div>
+    <div class="skeleton" style="height: 180px; margin-bottom: 1.5rem; border-radius: 16px;"></div>
+    <div class="skeleton" style="height: 140px; border-radius: 16px;"></div>
+</div>
+
+<!-- Actual Content Wrapper -->
+<div class="content-wrapper">
+    <!-- Header Greeting Card -->
+    <div class="card profile-header-card" style="padding: 1.5rem; margin-bottom: 1.5rem; background: linear-gradient(135deg, rgba(22, 163, 74, 0.12) 0%, rgba(15, 23, 42, 0.6) 100%); border: 1px solid rgba(22, 163, 74, 0.25); border-radius: 16px;">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <div style="width: 64px; height: 64px; border-radius: 50%; background: var(--primary); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; font-weight: 700; box-shadow: 0 4px 14px rgba(22, 163, 74, 0.4);">
+                {{ user_info.name[0]|upper if user_info and user_info.name else 'C' }}
+            </div>
+            <div>
+                <h2 style="margin: 0; font-size: 1.35rem; font-weight: 700; color: var(--text-primary);">{{ user_info.name if user_info else session.get('user_name', 'Customer') }}</h2>
+                <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.35rem;">
+                    <span class="badge success" style="font-size: 0.72rem; padding: 0.2rem 0.55rem;"><i class="fa-solid fa-shield-halved"></i> Verified Customer Account</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats Grid -->
+    <div class="grid-2" style="margin-bottom: 1.5rem; gap: 1rem;">
+        <div class="card" style="padding: 1.25rem; border-radius: 16px; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(22, 163, 74, 0.12); color: var(--primary); display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+                <i class="fa-solid fa-basket-shopping"></i>
+            </div>
+            <div>
+                <div style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary);">{{ total_purchases }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Total Purchases Tracked</div>
+            </div>
+        </div>
+        <div class="card" style="padding: 1.25rem; border-radius: 16px; display: flex; align-items: center; gap: 1rem;">
+            <div style="width: 48px; height: 48px; border-radius: 12px; background: rgba(234, 179, 8, 0.12); color: #eab308; display: flex; align-items: center; justify-content: center; font-size: 1.4rem;">
+                <i class="fa-solid fa-bell"></i>
+            </div>
+            <div>
+                <div style="font-size: 1.35rem; font-weight: 700; color: var(--text-primary);">{{ total_alerts }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-secondary);">Expiry Reminders Sent</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Details Card -->
+    <div class="card" style="margin-bottom: 1.5rem; border-radius: 16px; padding: 1.5rem;">
+        <h3 class="card-title" style="margin-bottom: 1.25rem; font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">
+            <i class="fa-solid fa-id-card" style="color: var(--primary);"></i> Personal Information
+        </h3>
+        
+        <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+                        <i class="fa-solid fa-phone"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Registered Phone</div>
+                        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary); font-family: monospace;">{{ user_info.phone if user_info and user_info.phone else 'Not provided' }}</div>
+                    </div>
+                </div>
+                <span class="badge secondary" style="font-size: 0.7rem;">Checkout ID</span>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+                        <i class="fa-solid fa-envelope"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Email Address</div>
+                        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">{{ user_info.email if user_info and user_info.email else 'None linked' }}</div>
+                    </div>
+                </div>
+                <span class="badge success" style="font-size: 0.7rem;">Alert Destination</span>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between;">
+                <div style="display: flex; align-items: center; gap: 0.85rem;">
+                    <div style="width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+                        <i class="fa-solid fa-store"></i>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px;">Primary Store</div>
+                        <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-primary);">M Mart Retail</div>
+                    </div>
+                </div>
+                <span class="badge info" style="font-size: 0.7rem;">Active</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Preferences Card -->
+    <div class="card" style="margin-bottom: 1.5rem; border-radius: 16px; padding: 1.5rem;">
+        <h3 class="card-title" style="margin-bottom: 1.25rem; font-size: 1.1rem; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 0.75rem;">
+            <i class="fa-solid fa-bell" style="color: var(--warning);"></i> Notification Settings
+        </h3>
+
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0;">
+                <div>
+                    <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Email Expiry Reminders</div>
+                    <div style="font-size: 0.78rem; color: var(--text-secondary);">Receive alerts 7, 3, and 1 day before product expiry.</div>
+                </div>
+                <span class="badge success" style="font-size: 0.72rem;"><i class="fa-solid fa-check"></i> Enabled</span>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-top: 1px solid rgba(255,255,255,0.05);">
+                <div>
+                    <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">SMS Text Reminders</div>
+                    <div style="font-size: 0.78rem; color: var(--text-secondary);">SMS alerts sent via TextBee integration to registered phone.</div>
+                </div>
+                <span class="badge success" style="font-size: 0.72rem;"><i class="fa-solid fa-check"></i> Enabled</span>
+            </div>
+
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0.5rem 0; border-top: 1px solid rgba(255,255,255,0.05);">
+                <div>
+                    <div style="font-weight: 600; font-size: 0.9rem; color: var(--text-primary);">Consumption Tracking Auto-Skip</div>
+                    <div style="font-size: 0.78rem; color: var(--text-secondary);">Automatically stop alerts when you mark an item as consumed.</div>
+                </div>
+                <span class="badge info" style="font-size: 0.72rem;"><i class="fa-solid fa-shield"></i> Active</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Action Links -->
+    <div style="display: flex; flex-direction: column; gap: 0.85rem; margin-bottom: 2rem;">
+        <a href="{{ url_for('customer_bills') }}" class="btn btn-secondary" style="width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; border-radius: 12px;">
+            <i class="fa-solid fa-file-invoice-dollar"></i> View My Bills &amp; Invoices
+        </a>
+        <a href="{{ url_for('logout') }}" class="btn btn-outline" style="width: 100%; min-height: 48px; display: flex; align-items: center; justify-content: center; gap: 0.5rem; font-weight: 600; border-color: rgba(239, 68, 68, 0.4); color: #ef4444; border-radius: 12px;">
+            <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out of ExpiryPilot
+        </a>
+    </div>
+</div>
+{% endblock %}

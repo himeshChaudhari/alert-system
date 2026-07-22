@@ -14,7 +14,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     {% block head %}{% endblock %}
 </head>
-<body>
+<body class="{% if session.get('user_role') == 'customer' %}is-customer-mobile{% endif %}">
     <header>
         <div class="navbar">
             <a href="/" class="nav-brand">
@@ -69,10 +69,13 @@
                         </a>
                     {% elif session['user_role'] == 'customer' %}
                         <a href="{{ url_for('customer_dashboard') }}" class="nav-link {% if request.path == '/customer/dashboard' %}active{% endif %}">
-                            <i class="fa-solid fa-timeline"></i> My Expiry Timeline
+                            <i class="fa-solid fa-house"></i> Home
                         </a>
                         <a href="{{ url_for('customer_bills') }}" class="nav-link {% if request.path == '/customer/bills' %}active{% endif %}">
-                            <i class="fa-solid fa-file-invoice-dollar"></i> My Bills
+                            <i class="fa-solid fa-box-archive"></i> Purchases
+                        </a>
+                        <a href="{{ url_for('customer_profile') }}" class="nav-link {% if request.path == '/customer/profile' %}active{% endif %}">
+                            <i class="fa-solid fa-user"></i> Profile
                         </a>
                     {% endif %}
                     
@@ -111,6 +114,32 @@
     <main>
         {% block content %}{% endblock %}
     </main>
+
+    {% if session.get('user_role') == 'customer' %}
+    <!-- Mobile Sticky Bottom Navigation Bar (Customer Mobile UX) -->
+    <nav class="mobile-bottom-nav" aria-label="Mobile Navigation">
+        <a href="{{ url_for('customer_dashboard') }}" class="mobile-nav-item {% if request.path == '/customer/dashboard' and not request.endpoint == 'customer_profile' %}active{% endif %}">
+            <div class="mobile-nav-icon"><i class="fa-solid fa-house"></i></div>
+            <span class="mobile-nav-label">Home</span>
+        </a>
+        <a href="{{ url_for('customer_bills') }}" class="mobile-nav-item {% if request.path == '/customer/bills' %}active{% endif %}">
+            <div class="mobile-nav-icon"><i class="fa-solid fa-box-archive"></i></div>
+            <span class="mobile-nav-label">Purchases</span>
+        </a>
+        <a href="{{ url_for('customer_dashboard') }}#expiry" class="mobile-nav-item">
+            <div class="mobile-nav-icon"><i class="fa-solid fa-hourglass-half"></i></div>
+            <span class="mobile-nav-label">Expiry</span>
+        </a>
+        <a href="{{ url_for('customer_dashboard') }}#notifications" class="mobile-nav-item">
+            <div class="mobile-nav-icon"><i class="fa-solid fa-bell"></i></div>
+            <span class="mobile-nav-label">Alerts</span>
+        </a>
+        <a href="{{ url_for('customer_profile') }}" class="mobile-nav-item {% if request.path == '/customer/profile' %}active{% endif %}">
+            <div class="mobile-nav-icon"><i class="fa-solid fa-user"></i></div>
+            <span class="mobile-nav-label">Profile</span>
+        </a>
+    </nav>
+    {% endif %}
 
     <!-- Footer -->
     <footer>

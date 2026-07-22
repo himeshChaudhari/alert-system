@@ -5,165 +5,114 @@
 {% block content %}
 <!-- Skeleton Wrapper (Visible on Load) -->
 <div class="skeleton-wrapper">
-    <div style="margin-bottom: 2rem;">
-        <div class="skeleton-title skeleton-shimmer" style="height: 36px; width: 320px; margin-bottom: 8px;"></div>
-        <div class="skeleton-text skeleton-shimmer" style="height: 18px; width: 550px;"></div>
+    <div style="margin-bottom: 1.5rem;">
+        <div class="skeleton-title skeleton-shimmer" style="height: 32px; width: 280px; margin-bottom: 8px;"></div>
+        <div class="skeleton-text skeleton-shimmer" style="height: 16px; width: 420px;"></div>
     </div>
     
+    <div class="grid-4" style="margin-bottom: 1.5rem; gap: 1rem;">
+        <div class="skeleton" style="height: 85px; border-radius: 16px;"></div>
+        <div class="skeleton" style="height: 85px; border-radius: 16px;"></div>
+        <div class="skeleton" style="height: 85px; border-radius: 16px;"></div>
+        <div class="skeleton" style="height: 85px; border-radius: 16px;"></div>
+    </div>
+
     <div class="grid-2">
-        <!-- Left Column Timeline Skeleton -->
-        <div>
-            <div class="card">
-                <div class="skeleton-title skeleton-shimmer" style="width: 180px; height: 24px; margin-bottom: 1.5rem;"></div>
-                
-                <div class="timeline" style="border-left: 2px dashed #E5E7EB;">
-                    <!-- Timeline Item Skeleton 1 -->
-                    <div class="timeline-item" style="margin-bottom: 1.25rem;">
-                        <div class="timeline-dot skeleton-shimmer" style="background: #E5E7EB; border: 3px solid #E5E7EB; width: 12px; height: 12px; left: -23px; top: 14px;"></div>
-                        <div class="timeline-content" style="display: flex; justify-content: space-between; align-items: center; background: #FAFAFA; border: 1px solid var(--border-color); padding: 1rem 1.25rem;">
-                            <div style="flex: 1;">
-                                <div class="skeleton-text skeleton-shimmer" style="width: 200px; height: 16px; margin-bottom: 6px;"></div>
-                                <div class="skeleton-text skeleton-shimmer" style="width: 120px; height: 12px; margin-bottom: 4px;"></div>
-                                <div class="skeleton-text skeleton-shimmer" style="width: 140px; height: 12px;"></div>
-                            </div>
-                            <div class="skeleton-button skeleton-shimmer" style="width: 90px; height: 26px; border-radius: 20px;"></div>
-                        </div>
-                    </div>
-                    <!-- Timeline Item Skeleton 2 -->
-                    <div class="timeline-item" style="margin-bottom: 1.25rem;">
-                        <div class="timeline-dot skeleton-shimmer" style="background: #E5E7EB; border: 3px solid #E5E7EB; width: 12px; height: 12px; left: -23px; top: 14px;"></div>
-                        <div class="timeline-content" style="display: flex; justify-content: space-between; align-items: center; background: #FAFAFA; border: 1px solid var(--border-color); padding: 1rem 1.25rem;">
-                            <div style="flex: 1;">
-                                <div class="skeleton-text skeleton-shimmer" style="width: 180px; height: 16px; margin-bottom: 6px;"></div>
-                                <div class="skeleton-text skeleton-shimmer" style="width: 110px; height: 12px; margin-bottom: 4px;"></div>
-                                <div class="skeleton-text skeleton-shimmer" style="width: 130px; height: 12px;"></div>
-                            </div>
-                            <div class="skeleton-button skeleton-shimmer" style="width: 90px; height: 26px; border-radius: 20px;"></div>
-                        </div>
-                    </div>
-                    <!-- Timeline Item Skeleton 3 -->
-                    <div class="timeline-item">
-                        <div class="timeline-dot skeleton-shimmer" style="background: #E5E7EB; border: 3px solid #E5E7EB; width: 12px; height: 12px; left: -23px; top: 14px;"></div>
-                        <div class="timeline-content" style="display: flex; justify-content: space-between; align-items: center; background: #FAFAFA; border: 1px solid var(--border-color); padding: 1rem 1.25rem;">
-                            <div style="flex: 1;">
-                                <div class="skeleton-text skeleton-shimmer" style="width: 220px; height: 16px; margin-bottom: 6px;"></div>
-                                <div class="skeleton-text skeleton-shimmer" style="width: 130px; height: 12px; margin-bottom: 4px;"></div>
-                                <div class="skeleton-text skeleton-shimmer" style="width: 150px; height: 12px;"></div>
-                            </div>
-                            <div class="skeleton-button skeleton-shimmer" style="width: 90px; height: 26px; border-radius: 20px;"></div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        <div class="card" style="border-radius: 16px;">
+            <div class="skeleton-title skeleton-shimmer" style="width: 180px; height: 24px; margin-bottom: 1.5rem;"></div>
+            <div class="skeleton" style="height: 110px; margin-bottom: 1rem; border-radius: 12px;"></div>
+            <div class="skeleton" style="height: 110px; border-radius: 12px;"></div>
         </div>
-        
-        <!-- Right Column Table Skeleton -->
-        <div>
-            <div class="card">
-                <div class="skeleton-title skeleton-shimmer" style="width: 210px; height: 24px; margin-bottom: 1.5rem;"></div>
-                
-                <div class="table-wrapper">
-                    <table class="skeleton-table">
-                        <thead>
-                            <tr>
-                                <th><div class="skeleton-text skeleton-shimmer" style="width: 100px; height: 14px;"></div></th>
-                                <th><div class="skeleton-text skeleton-shimmer" style="width: 120px; height: 14px;"></div></th>
-                                <th><div class="skeleton-text skeleton-shimmer" style="width: 90px; height: 14px;"></div></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><div class="skeleton-text skeleton-shimmer" style="width: 80px; height: 14px;"></div></td>
-                                <td>
-                                    <div class="skeleton-text skeleton-shimmer" style="width: 120px; height: 14px; margin-bottom: 4px;"></div>
-                                    <div class="skeleton-text skeleton-shimmer" style="width: 80px; height: 10px;"></div>
-                                </td>
-                                <td><div class="skeleton-button skeleton-shimmer" style="width: 80px; height: 20px; border-radius: 12px;"></div></td>
-                            </tr>
-                            <tr>
-                                <td><div class="skeleton-text skeleton-shimmer" style="width: 80px; height: 14px;"></div></td>
-                                <td>
-                                    <div class="skeleton-text skeleton-shimmer" style="width: 110px; height: 14px; margin-bottom: 4px;"></div>
-                                    <div class="skeleton-text skeleton-shimmer" style="width: 80px; height: 10px;"></div>
-                                </td>
-                                <td><div class="skeleton-button skeleton-shimmer" style="width: 80px; height: 20px; border-radius: 12px;"></div></td>
-                            </tr>
-                            <tr>
-                                <td><div class="skeleton-text skeleton-shimmer" style="width: 80px; height: 14px;"></div></td>
-                                <td>
-                                    <div class="skeleton-text skeleton-shimmer" style="width: 130px; height: 14px; margin-bottom: 4px;"></div>
-                                    <div class="skeleton-text skeleton-shimmer" style="width: 80px; height: 10px;"></div>
-                                </td>
-                                <td><div class="skeleton-button skeleton-shimmer" style="width: 80px; height: 20px; border-radius: 12px;"></div></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
+        <div class="card" style="border-radius: 16px;">
+            <div class="skeleton-title skeleton-shimmer" style="width: 210px; height: 24px; margin-bottom: 1.5rem;"></div>
+            <div class="skeleton" style="height: 200px; border-radius: 12px;"></div>
         </div>
     </div>
 </div>
 
 <!-- Actual Content Wrapper (Fades In) -->
 <div class="content-wrapper">
-    <div style="margin-bottom: 1.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <!-- Greeting & Header Banner -->
+    <div class="customer-welcome-card" style="margin-bottom: 1.5rem; padding: 1.5rem; background: linear-gradient(135deg, rgba(22, 163, 74, 0.15) 0%, rgba(15, 23, 42, 0.7) 100%); border: 1px solid rgba(22, 163, 74, 0.25); border-radius: 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
         <div>
-            <h1>My Product Expiry Dashboard</h1>
-            <p class="subtitle" style="margin-bottom: 0;">Track your purchased items, monitor expiry timelines, and mark consumed products.</p>
+            <h1 style="margin: 0 0 0.35rem 0; font-size: 1.5rem; font-weight: 700; color: var(--text-primary);">
+                <span id="time-greeting">Good Day</span>, {{ user_info.name.split()[0] if user_info and user_info.name else session.get('user_name', 'Customer').split()[0] }} 👋
+            </h1>
+            <p class="subtitle" style="margin: 0; font-size: 0.9rem; color: var(--text-secondary);">
+                Track your grocery expiry dates, receive timely alerts, and mark consumed items.
+            </p>
         </div>
-        <a href="{{ url_for('customer_bills') }}" class="btn btn-secondary">
-            <i class="fa-solid fa-file-invoice-dollar"></i> My Bills &amp; Invoices
+        <a href="{{ url_for('customer_bills') }}" class="btn btn-secondary" style="min-height: 48px; display: inline-flex; align-items: center; gap: 0.5rem; font-weight: 600; padding: 0 1.25rem; border-radius: 12px;">
+            <i class="fa-solid fa-file-invoice-dollar"></i> My Purchases &amp; Bills
         </a>
     </div>
 
-    <!-- Summary Stats Bar -->
-    <div class="grid-4" style="margin-bottom: 2rem;">
-        <div class="card stat-card" style="padding: 1.25rem;">
-            <div class="stat-icon" style="background: rgba(22, 163, 74, 0.1); color: var(--primary);"><i class="fa-solid fa-basket-shopping"></i></div>
+    <!-- Quick Summary Stats Bar (Touch Friendly Grid) -->
+    <div class="grid-4 customer-stats-grid" style="margin-bottom: 1.75rem; gap: 0.85rem;">
+        <div class="card stat-card" style="padding: 1.15rem; border-radius: 16px;">
+            <div class="stat-icon" style="background: rgba(22, 163, 74, 0.12); color: var(--primary);"><i class="fa-solid fa-basket-shopping"></i></div>
             <div>
-                <div class="stat-value" style="font-size: 1.5rem;">{{ total_purchases }}</div>
-                <div class="stat-label">Total Purchased Items</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 700;">{{ total_purchases }}</div>
+                <div class="stat-label" style="font-size: 0.78rem; color: var(--text-secondary);">Purchased Products</div>
             </div>
         </div>
-        <div class="card stat-card" style="padding: 1.25rem;">
-            <div class="stat-icon" style="background: rgba(22, 163, 74, 0.15); color: #16a34a;"><i class="fa-solid fa-clock font-lg"></i></div>
+        <div class="card stat-card" style="padding: 1.15rem; border-radius: 16px;">
+            <div class="stat-icon" style="background: rgba(234, 179, 8, 0.15); color: #eab308;"><i class="fa-solid fa-clock font-lg"></i></div>
             <div>
-                <div class="stat-value" style="font-size: 1.5rem;">{{ active_count }}</div>
-                <div class="stat-label">Active Tracking</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 700;">{{ active_count }}</div>
+                <div class="stat-label" style="font-size: 0.78rem; color: var(--text-secondary);">Expiring Soon / Active</div>
             </div>
         </div>
-        <div class="card stat-card" style="padding: 1.25rem;">
+        <div class="card stat-card" style="padding: 1.15rem; border-radius: 16px;">
             <div class="stat-icon" style="background: rgba(148, 163, 184, 0.2); color: #64748b;"><i class="fa-solid fa-circle-check"></i></div>
             <div>
-                <div class="stat-value" style="font-size: 1.5rem;">{{ consumed_count }}</div>
-                <div class="stat-label">Consumed Products</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 700;">{{ consumed_count }}</div>
+                <div class="stat-label" style="font-size: 0.78rem; color: var(--text-secondary);">Consumed Products</div>
             </div>
         </div>
-        <div class="card stat-card" style="padding: 1.25rem;">
+        <div class="card stat-card" style="padding: 1.15rem; border-radius: 16px;">
             <div class="stat-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;"><i class="fa-solid fa-triangle-exclamation"></i></div>
             <div>
-                <div class="stat-value" style="font-size: 1.5rem;">{{ expired_count }}</div>
-                <div class="stat-label">Expired Products</div>
+                <div class="stat-value" style="font-size: 1.4rem; font-weight: 700;">{{ expired_count }}</div>
+                <div class="stat-label" style="font-size: 0.78rem; color: var(--text-secondary);">Expired Items</div>
             </div>
         </div>
     </div>
 
+    <!-- Filter Chips for Expiry Timeline -->
+    <div style="margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; overflow-x: auto; padding-bottom: 0.5rem; -webkit-overflow-scrolling: touch;" role="tablist" aria-label="Filter Items">
+        <button type="button" class="filter-chip active" onclick="filterTimeline('all', this)" style="min-height: 40px; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; border: 1px solid var(--primary); background: var(--primary); color: #ffffff; cursor: pointer; white-space: nowrap;">
+            All ({{ total_purchases }})
+        </button>
+        <button type="button" class="filter-chip" onclick="filterTimeline('active', this)" style="min-height: 40px; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: var(--text-secondary); cursor: pointer; white-space: nowrap;">
+            Active ({{ active_count }})
+        </button>
+        <button type="button" class="filter-chip" onclick="filterTimeline('consumed', this)" style="min-height: 40px; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: var(--text-secondary); cursor: pointer; white-space: nowrap;">
+            Consumed ({{ consumed_count }})
+        </button>
+        <button type="button" class="filter-chip" onclick="filterTimeline('expired', this)" style="min-height: 40px; padding: 0.4rem 1rem; border-radius: 20px; font-size: 0.82rem; font-weight: 600; border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.05); color: var(--text-secondary); cursor: pointer; white-space: nowrap;">
+            Expired ({{ expired_count }})
+        </button>
+    </div>
+
+    <!-- Main Grid Section -->
     <div class="grid-2">
-        <!-- Left Column: Personal Expiry Timeline -->
-        <div>
-            <div class="card">
-                <h3 class="card-title" style="margin-bottom: 1.5rem;">
+        <!-- Left Column: Expiry Timeline Anchor -->
+        <div id="expiry">
+            <div class="card" style="border-radius: 16px;">
+                <h3 class="card-title" style="margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.6rem;">
                     <i class="fa-solid fa-hourglass-half" style="color: var(--primary);"></i>
-                    My Expiry Timeline
+                    Upcoming Expiry Timeline
                 </h3>
                 
                 {% if timeline %}
-                    <div class="timeline">
+                    <div class="timeline" id="timeline-container">
                         {% for item in timeline %}
-                            <div class="timeline-item">
-                                <!-- Assign dot color based on status & urgency -->
+                            {% set status_class = 'consumed' if item.is_consumed else ('expired' if item.days_remaining < 0 else 'active') %}
+                            <div class="timeline-item timeline-card-entry" data-status="{{ status_class }}" style="margin-bottom: 1.25rem;">
+                                <!-- Urgency Dot -->
                                 {% if item.is_consumed %}
-                                    <div class="timeline-dot" style="background: #94a3b8; border: 3px solid #cbd5e1;"></div>
+                                    <div class="timeline-dot" style="background: #64748b; border: 3px solid #cbd5e1;"></div>
                                 {% elif item.days_remaining < 0 %}
                                     <div class="timeline-dot danger"></div>
                                 {% elif item.days_remaining <= 1 %}
@@ -174,46 +123,46 @@
                                     <div class="timeline-dot success"></div>
                                 {% endif %}
                                 
-                                <div class="timeline-content">
-                                    <div class="timeline-info">
-                                        <h4 style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+                                <div class="timeline-content" style="border-radius: 14px; padding: 1.15rem; background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 4px 16px rgba(0,0,0,0.08);">
+                                    <div class="timeline-info" style="margin-bottom: 0.75rem;">
+                                        <h4 style="margin: 0 0 0.35rem 0; font-size: 1.05rem; font-weight: 700; color: var(--text-primary); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
                                             <span>{{ item.product_name }}</span>
-                                            <span style="font-size: 0.8rem; font-weight: normal; color: var(--text-secondary);">({{ "%.2f"|format(item.pack_size)|replace(".00", "") }} {{ item.unit|title }})</span>
-                                            <span style="font-size: 0.85rem; font-weight: 600; color: var(--primary);">x{{ item.quantity if item.quantity is not none else 1 }}</span>
+                                            <span style="font-size: 0.8rem; font-weight: 500; color: var(--primary); background: rgba(22, 163, 74, 0.12); padding: 0.15rem 0.55rem; border-radius: 8px;">
+                                                x{{ item.quantity if item.quantity is not none else 1 }} ({{ "%.2f"|format(item.pack_size)|replace(".00", "") }} {{ item.unit|title }})
+                                            </span>
                                         </h4>
-                                        <p>Purchased: {{ item.purchase_date }}</p>
-                                        <p style="font-size: 0.8rem; margin-top: 0.2rem; color: var(--text-secondary);">
-                                            Expires: <span style="font-family: monospace;">{{ item.expiry_date }}</span>
-                                        </p>
+                                        <div style="font-size: 0.82rem; color: var(--text-secondary); display: flex; flex-wrap: wrap; gap: 1rem; margin-top: 0.4rem;">
+                                            <span><i class="fa-regular fa-calendar-check" style="margin-right: 4px;"></i> Purchased: {{ item.purchase_date }}</span>
+                                            <span><i class="fa-solid fa-triangle-exclamation" style="margin-right: 4px;"></i> Expiry: <strong style="font-family: monospace;">{{ item.expiry_date }}</strong></span>
+                                        </div>
                                     </div>
                                     
-                                    <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 0.5rem;">
-                                        <!-- Requirement 6: Display three status badges (Active, Consumed, Expired) -->
+                                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; border-top: 1px solid rgba(255, 255, 255, 0.06); padding-top: 0.75rem;">
+                                        <!-- Status Badge -->
                                         {% if item.is_consumed %}
-                                            <span class="badge secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3);">
+                                            <span class="badge secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); font-size: 0.75rem; padding: 0.3rem 0.65rem;">
                                                 <i class="fa-solid fa-circle-check"></i> Consumed
                                             </span>
-                                            <button type="button" class="btn btn-secondary btn-sm" disabled style="opacity: 0.6; cursor: not-allowed; font-size: 0.75rem; padding: 0.25rem 0.55rem;">
+                                            <button type="button" class="btn btn-secondary" disabled style="min-height: 48px; opacity: 0.65; cursor: not-allowed; font-size: 0.82rem; padding: 0 1rem; border-radius: 10px;">
                                                 <i class="fa-solid fa-check"></i> Consumed
                                             </button>
                                         {% elif item.days_remaining < 0 %}
-                                            <span class="badge danger"><i class="fa-solid fa-circle-xmark"></i> Expired</span>
-                                            <!-- Requirement 7: Cannot mark expired product as consumed -->
-                                            <button type="button" class="btn btn-secondary btn-sm" disabled title="Expired products cannot be marked as consumed" style="opacity: 0.5; cursor: not-allowed; font-size: 0.75rem; padding: 0.25rem 0.55rem;">
+                                            <span class="badge danger" style="font-size: 0.75rem; padding: 0.3rem 0.65rem;"><i class="fa-solid fa-circle-xmark"></i> Expired</span>
+                                            <button type="button" class="btn btn-secondary" disabled title="Expired products cannot be marked as consumed" style="min-height: 48px; opacity: 0.5; cursor: not-allowed; font-size: 0.82rem; padding: 0 1rem; border-radius: 10px;">
                                                 <i class="fa-solid fa-ban"></i> Expired
                                             </button>
                                         {% else %}
                                             {% if item.days_remaining <= 1 %}
-                                                <span class="badge danger">Expires Tomorrow!</span>
+                                                <span class="badge danger" style="font-size: 0.75rem; padding: 0.3rem 0.65rem;">Expires Tomorrow!</span>
                                             {% elif item.days_remaining <= 3 %}
-                                                <span class="badge warning">{{ item.days_remaining }} Days Left</span>
+                                                <span class="badge warning" style="font-size: 0.75rem; padding: 0.3rem 0.65rem;">{{ item.days_remaining }} Days Left</span>
                                             {% else %}
-                                                <span class="badge success">{{ item.days_remaining }} Days Left</span>
+                                                <span class="badge success" style="font-size: 0.75rem; padding: 0.3rem 0.65rem;">{{ item.days_remaining }} Days Left</span>
                                             {% endif %}
                                             
-                                            <!-- Requirement 1 & 2: Mark as consumed action with confirmation -->
-                                            <button type="button" class="btn btn-outline btn-sm" onclick="confirmMarkConsumed({{ item.purchase_id }}, '{{ item.product_name|escape }}')" style="font-size: 0.75rem; padding: 0.28rem 0.6rem; border-color: rgba(22, 163, 74, 0.5); color: var(--primary); font-weight: 600;">
-                                                <i class="fa-solid fa-utensils"></i> Mark as Consumed
+                                            <!-- Touch Target >= 48px Button -->
+                                            <button type="button" class="btn btn-primary" onclick="confirmMarkConsumed({{ item.purchase_id }}, '{{ item.product_name|escape }}')" style="min-height: 48px; font-size: 0.85rem; padding: 0 1.25rem; font-weight: 600; border-radius: 10px; box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);">
+                                                <i class="fa-solid fa-utensils" style="margin-right: 4px;"></i> Mark as Consumed
                                             </button>
                                         {% endif %}
                                     </div>
@@ -222,121 +171,85 @@
                         {% endfor %}
                     </div>
                 {% else %}
-                    <div style="text-align: center; padding: 4rem 0; color: var(--text-secondary);">
+                    <div style="text-align: center; padding: 3.5rem 1rem; color: var(--text-secondary);">
                         <i class="fa-solid fa-barcode" style="font-size: 3rem; margin-bottom: 1rem; opacity: 0.4;"></i>
-                        <p>No purchased products tracked yet.</p>
-                        <p style="font-size: 0.8rem; margin-top: 0.5rem;">Give your registered phone number to the cashier during checkout!</p>
+                        <p style="font-size: 1rem; font-weight: 600; color: var(--text-primary);">No purchased products tracked yet.</p>
+                        <p style="font-size: 0.82rem; margin-top: 0.4rem;">Provide your registered phone number at store checkout!</p>
                     </div>
                 {% endif %}
             </div>
         </div>
         
-        <!-- Right Column: Purchase History & Personal Alert Log -->
+        <!-- Right Column: Purchase History & Notifications Anchor -->
         <div style="display: flex; flex-direction: column; gap: 1.5rem;">
-            <!-- Purchase History Table -->
-            <div class="card">
-                <h3 class="card-title" style="margin-bottom: 1rem;">
-                    <i class="fa-solid fa-basket-shopping" style="color: var(--primary);"></i>
-                    Purchase History &amp; Consumption Status
+            <!-- Purchase History Card Feed -->
+            <div class="card" style="border-radius: 16px;">
+                <h3 class="card-title" style="margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+                    <span><i class="fa-solid fa-basket-shopping" style="color: var(--primary); margin-right: 6px;"></i> Recent Purchases</span>
+                    <a href="{{ url_for('customer_bills') }}" style="font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 600;">View Bills &rarr;</a>
                 </h3>
                 
-                <div class="table-wrapper" style="max-height: 360px; overflow-y: auto;">
-                    {% if timeline %}
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Product</th>
-                                    <th>Purchase Date</th>
-                                    <th>Expiry Date</th>
-                                    <th>Status</th>
-                                    <th style="text-align: right;">Action</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for item in timeline %}
-                                    <tr>
-                                        <td>
-                                            <strong>{{ item.product_name }}</strong>
-                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">
-                                                {{ "%.2f"|format(item.pack_size)|replace(".00", "") }} {{ item.unit|title }} (x{{ item.quantity if item.quantity is not none else 1 }})
-                                            </div>
-                                        </td>
-                                        <td><span style="font-family: monospace; font-size: 0.82rem;">{{ item.purchase_date }}</span></td>
-                                        <td><span style="font-family: monospace; font-size: 0.82rem;">{{ item.expiry_date }}</span></td>
-                                        <td>
-                                            {% if item.is_consumed %}
-                                                <span class="badge secondary" style="background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); font-size: 0.7rem;">Consumed</span>
-                                            {% elif item.days_remaining < 0 %}
-                                                <span class="badge danger" style="font-size: 0.7rem;">Expired</span>
-                                            {% else %}
-                                                <span class="badge success" style="font-size: 0.7rem;">Active</span>
-                                            {% endif %}
-                                        </td>
-                                        <td style="text-align: right;">
-                                            {% if item.is_consumed %}
-                                                <span style="font-size: 0.75rem; color: var(--text-secondary);"><i class="fa-solid fa-circle-check"></i> Consumed</span>
-                                            {% elif item.days_remaining < 0 %}
-                                                <span style="font-size: 0.75rem; color: var(--text-secondary); opacity: 0.7;">Expired</span>
-                                            {% else %}
-                                                <button type="button" class="btn btn-outline btn-sm" onclick="confirmMarkConsumed({{ item.purchase_id }}, '{{ item.product_name|escape }}')" style="font-size: 0.72rem; padding: 0.22rem 0.5rem; font-weight: 600;">
-                                                    Mark Consumed
-                                                </button>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <div style="text-align: center; padding: 2.5rem 0; color: var(--text-secondary);">
-                            <p style="font-size: 0.85rem;">No purchases found.</p>
-                        </div>
-                    {% endif %}
-                </div>
+                {% if timeline %}
+                    <div style="display: flex; flex-direction: column; gap: 0.85rem; max-height: 380px; overflow-y: auto; padding-right: 4px;">
+                        {% for item in timeline[:6] %}
+                            <div style="padding: 0.9rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
+                                <div>
+                                    <div style="font-weight: 700; font-size: 0.92rem; color: var(--text-primary);">{{ item.product_name }}</div>
+                                    <div style="font-size: 0.78rem; color: var(--text-secondary); margin-top: 2px;">
+                                        Purchased: {{ item.purchase_date }} | Expiry: {{ item.expiry_date }}
+                                    </div>
+                                </div>
+                                <div>
+                                    {% if item.is_consumed %}
+                                        <span class="badge secondary" style="font-size: 0.7rem;">Consumed</span>
+                                    {% elif item.days_remaining < 0 %}
+                                        <span class="badge danger" style="font-size: 0.7rem;">Expired</span>
+                                    {% else %}
+                                        <span class="badge success" style="font-size: 0.7rem;">Active</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 2rem 0; color: var(--text-secondary);">
+                        <p style="font-size: 0.85rem;">No recent purchases recorded.</p>
+                    </div>
+                {% endif %}
             </div>
 
-            <!-- Notification History Card -->
-            <div class="card">
+            <!-- Notifications Center Anchor -->
+            <div class="card" id="notifications" style="border-radius: 16px;">
                 <h3 class="card-title" style="margin-bottom: 1rem;">
-                    <i class="fa-regular fa-envelope-open" style="color: var(--warning);"></i>
-                    Notification History
+                    <i class="fa-regular fa-envelope-open" style="color: var(--warning); margin-right: 6px;"></i>
+                    Notification History Center
                 </h3>
                 
-                <div class="table-wrapper" style="max-height: 280px; overflow-y: auto;">
-                    {% if notifications %}
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>Date</th>
-                                    <th>Product</th>
-                                    <th>Warning</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {% for n in notifications %}
-                                    <tr>
-                                        <td><span style="font-family: monospace; font-size: 0.82rem;">{{ n.alert_sent_date }}</span></td>
-                                        <td>
-                                            <strong>{{ n.product_name }}</strong>
-                                            <div style="font-size: 0.75rem; color: var(--text-secondary);">Expiry: {{ n.expiry_date }}</div>
-                                        </td>
-                                        <td>
-                                            <span class="badge {% if n.days_before_expiry == 1 %}danger{% elif n.days_before_expiry == 3 %}warning{% else %}success{% endif %}" style="font-size: 0.7rem;">
-                                                {{ n.days_before_expiry }} Day(s) Before
-                                            </span>
-                                        </td>
-                                    </tr>
-                                {% endfor %}
-                            </tbody>
-                        </table>
-                    {% else %}
-                        <div style="text-align: center; padding: 2rem 0; color: var(--text-secondary);">
-                            <i class="fa-regular fa-bell-slash" style="font-size: 2.5rem; margin-bottom: 0.75rem; opacity: 0.4;"></i>
-                            <p style="font-size: 0.85rem;">No notifications received yet.</p>
-                            <p style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem;">Alerts are sent 7, 3, and 1 day before product expiry for active items.</p>
-                        </div>
-                    {% endif %}
-                </div>
+                {% if notifications %}
+                    <div style="display: flex; flex-direction: column; gap: 0.75rem; max-height: 320px; overflow-y: auto; padding-right: 4px;">
+                        {% for n in notifications %}
+                            <div style="padding: 0.85rem 1rem; border-radius: 12px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.06); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem;">
+                                <div>
+                                    <div style="font-weight: 600; font-size: 0.88rem; color: var(--text-primary);">{{ n.product_name }}</div>
+                                    <div style="font-size: 0.76rem; color: var(--text-secondary); margin-top: 2px;">
+                                        Received: {{ n.alert_sent_date }} via {{ n.method|upper }}
+                                    </div>
+                                </div>
+                                <div>
+                                    <span class="badge {% if n.days_before_expiry == 1 %}danger{% elif n.days_before_expiry == 3 %}warning{% else %}success{% endif %}" style="font-size: 0.7rem;">
+                                        {{ n.days_before_expiry }} Day(s) Left
+                                    </span>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div style="text-align: center; padding: 2rem 0; color: var(--text-secondary);">
+                        <i class="fa-regular fa-bell-slash" style="font-size: 2.2rem; margin-bottom: 0.6rem; opacity: 0.4;"></i>
+                        <p style="font-size: 0.85rem; margin: 0;">No notification history yet.</p>
+                        <p style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem;">Alerts are sent 7, 3, and 1 day before product expiry for active items.</p>
+                    </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -345,8 +258,55 @@
 
 {% block scripts %}
 <script>
+document.addEventListener("DOMContentLoaded", function() {
+    // 1. Dynamic Greeting (Good Morning / Afternoon / Evening)
+    const greetingEl = document.getElementById('time-greeting');
+    if (greetingEl) {
+        const hour = new Date().getHours();
+        if (hour < 12) {
+            greetingEl.textContent = 'Good Morning';
+        } else if (hour < 17) {
+            greetingEl.textContent = 'Good Afternoon';
+        } else {
+            greetingEl.textContent = 'Good Evening';
+        }
+    }
+});
+
+// 2. Timeline Filter Chips Handler
+function filterTimeline(filter, btn) {
+    const chips = document.querySelectorAll('.filter-chip');
+    chips.forEach(c => {
+        c.classList.remove('active');
+        c.style.background = 'rgba(255,255,255,0.05)';
+        c.style.borderColor = 'rgba(255,255,255,0.15)';
+        c.style.color = 'var(--text-secondary)';
+    });
+    
+    btn.classList.add('active');
+    btn.style.background = 'var(--primary)';
+    btn.style.borderColor = 'var(--primary)';
+    btn.style.color = '#ffffff';
+
+    const items = document.querySelectorAll('.timeline-card-entry');
+    items.forEach(item => {
+        const status = item.getAttribute('data-status');
+        if (filter === 'all') {
+            item.style.display = 'block';
+        } else if (filter === 'active' && status === 'active') {
+            item.style.display = 'block';
+        } else if (filter === 'consumed' && status === 'consumed') {
+            item.style.display = 'block';
+        } else if (filter === 'expired' && status === 'expired') {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// 3. Mark As Consumed Confirmation Dialog (Requirement 2 & 7)
 function confirmMarkConsumed(purchaseId, productName) {
-    // Requirement 2: Display confirmation dialog before updating
     const confirmMsg = `Have you already consumed "${productName}"?\n\nYou will no longer receive expiry reminders for this item.`;
     if (confirm(confirmMsg)) {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
@@ -362,7 +322,6 @@ function confirmMarkConsumed(purchaseId, productName) {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                // Reload page to update status badges, stats cards, and timeline
                 window.location.reload();
             } else {
                 alert(data.message || 'Could not update consumption status.');
@@ -370,7 +329,6 @@ function confirmMarkConsumed(purchaseId, productName) {
         })
         .catch(err => {
             console.error('Error marking product as consumed:', err);
-            // Fallback form submission
             const form = document.createElement('form');
             form.method = 'POST';
             form.action = `/customer/mark-consumed/${purchaseId}`;

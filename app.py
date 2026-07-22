@@ -1921,15 +1921,46 @@ def customer_dashboard():
     """, (customer_id,))
     notifications = cur.fetchall()
     
+    # 3. Customer User Profile Details
+    cur.execute("SELECT id, name, email, phone, role FROM users WHERE id = %s", (customer_id,))
+    user_info = cur.fetchone()
+    
     cur.close()
     return render_template(
         'customer_dashboard.html',
         timeline=timeline,
         notifications=notifications,
+        user_info=user_info,
         total_purchases=total_purchases,
         active_count=active_count,
         consumed_count=consumed_count,
         expired_count=expired_count
+    )
+
+
+@app.route('/customer/profile')
+@login_required
+@role_required(['customer'])
+def customer_profile():
+    """Renders customer profile settings, contact details, and notification preferences."""
+    customer_id = session['user_id']
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    
+    cur.execute("SELECT id, name, email, phone, role FROM users WHERE id = %s", (customer_id,))
+    user_info = cur.fetchone()
+    
+    cur.execute("SELECT COUNT(*) AS total_purchases FROM purchases WHERE customer_id = %s", (customer_id,))
+    purchase_stat = cur.fetchone()
+    
+    cur.execute("SELECT COUNT(*) AS total_alerts FROM alerts_log WHERE customer_id = %s", (customer_id,))
+    alert_stat = cur.fetchone()
+    
+    cur.close()
+    return render_template(
+        'customer_profile.html',
+        user_info=user_info,
+        total_purchases=purchase_stat['total_purchases'] if purchase_stat else 0,
+        total_alerts=alert_stat['total_alerts'] if alert_stat else 0
     )
 
 
