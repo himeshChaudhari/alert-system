@@ -21,6 +21,7 @@ sys.modules['MySQLdb'] = MySQLdbMock
 sys.modules['MySQLdb.cursors'] = MySQLdbMock.cursors
 import MySQLdb.cursors
 from werkzeug.security import generate_password_hash, check_password_hash
+import os
 import base64
 import io
 import datetime
