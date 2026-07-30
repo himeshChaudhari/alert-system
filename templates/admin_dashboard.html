@@ -455,7 +455,7 @@
                                         <td><strong>{{ p.name }}</strong></td>
                                         <td style="text-align: center;">
                                             <span class="badge {% if p.total_stock == 0 %}danger{% else %}warning{% endif %}">
-                                                {{ p.total_stock }} {{ p.unit }}
+                                                {{ p.total_stock }} Packs
                                             </span>
                                         </td>
                                     </tr>
@@ -499,7 +499,7 @@
                                             <div style="font-size: 0.8rem; color: var(--text-secondary);">Reason: {{ w.reason }}</div>
                                         </td>
                                         <td style="text-align: center;">
-                                            <span class="badge danger">{{ w.quantity }} {{ w.unit }}</span>
+                                            <span class="badge danger">{{ w.quantity }} Packs</span>
                                         </td>
                                         <td style="font-weight: 600; color: var(--danger); font-family: monospace;">
                                             -₹{{ "%.2f"|format(w.wastage_cost) }}
@@ -554,7 +554,7 @@
                                             </div>
                                         </td>
                                         <td style="text-align: center;">
-                                            <span class="badge warning">{{ w.quantity }} {{ w.unit }}</span>
+                                            <span class="badge warning">{{ w.quantity }} Packs</span>
                                         </td>
                                         <td style="font-weight: 600; color: var(--danger); font-family: monospace;">
                                             -₹{{ "%.2f"|format(w.wastage_cost) }}
