@@ -728,6 +728,68 @@ def toggle_staff(staff_id):
         
     return redirect(url_for('admin_dashboard'))
 
+@app.route('/admin/delete-staff/<int:staff_id>', methods=['POST'])
+@login_required
+@role_required(['admin'])
+def delete_staff(staff_id):
+    """Permanently deletes a staff account, enforcing safety constraints and preserving billing/activity history."""
+    store_id = session.get('store_id')
+    user_role = session.get('user_role')
+    
+    cur = mysql.connection.cursor(MySQLdb.cursors.DictCursor)
+    try:
+        # 1. Fetch user to be deleted
+        if user_role == 'super_admin' or not store_id:
+            cur.execute("SELECT id, name, role, store_id FROM users WHERE id = %s", (staff_id,))
+        else:
+            cur.execute("SELECT id, name, role, store_id FROM users WHERE id = %s AND store_id = %s", (staff_id, store_id))
+            
+        staff = cur.fetchone()
+        if not staff:
+            flash('Staff account not found or access denied.', 'danger')
+            return redirect(url_for('admin_dashboard'))
+            
+        # Safety Rule: Cannot delete admin / super_admin accounts. Only staff accounts can be deleted.
+        if staff['role'] != 'staff':
+            flash('Safety constraint: Only staff accounts can be deleted. Admin accounts cannot be removed.', 'danger')
+            return redirect(url_for('admin_dashboard'))
+            
+        target_store_id = staff['store_id']
+        
+        # 2. Preserve historical billing and activity records before deleting
+        admin_id = None
+        if target_store_id:
+            cur.execute("SELECT id FROM users WHERE store_id = %s AND role = 'admin' ORDER BY id ASC LIMIT 1", (target_store_id,))
+            admin_row = cur.fetchone()
+            if admin_row:
+                admin_id = admin_row['id']
+                
+        if not admin_id:
+            admin_id = session.get('user_id')
+            
+        if admin_id and admin_id != staff_id:
+            cur.execute("UPDATE bills SET staff_id = %s WHERE staff_id = %s", (admin_id, staff_id))
+            cur.execute("UPDATE wastage_log SET logged_by = %s WHERE logged_by = %s", (admin_id, staff_id))
+            cur.execute("UPDATE products SET registered_by = %s WHERE registered_by = %s", (admin_id, staff_id))
+        else:
+            cur.execute("UPDATE bills SET staff_id = NULL WHERE staff_id = %s", (staff_id,))
+            cur.execute("UPDATE wastage_log SET logged_by = NULL WHERE logged_by = %s", (staff_id,))
+            cur.execute("UPDATE products SET registered_by = NULL WHERE registered_by = %s", (staff_id,))
+            
+        # 3. Permanently delete staff account from users table
+        cur.execute("DELETE FROM users WHERE id = %s AND role = 'staff'", (staff_id,))
+        mysql.connection.commit()
+        
+        flash(f"Staff member '{staff['name']}' has been permanently deleted.", 'success')
+    except Exception as e:
+        mysql.connection.rollback()
+        print(f"[ERROR] Failed to delete staff member: {e}")
+        flash('Failed to delete staff member. Please try again.', 'danger')
+    finally:
+        cur.close()
+        
+    return redirect(url_for('admin_dashboard'))
+
 @app.route('/logout')
 def logout():
     session.clear()
@@ -1267,10 +1329,10 @@ def view_bill(bill_id):
     cur.execute("""
         SELECT b.id, b.bill_date, b.total_amount, b.customer_id, b.store_id,
                c.name AS customer_name, c.phone AS customer_phone, c.email AS customer_email,
-               s.name AS staff_name, st.name AS store_name, st.address AS store_address
+               COALESCE(s.name, 'Store Staff') AS staff_name, st.name AS store_name, st.address AS store_address
         FROM bills b
         JOIN users c ON b.customer_id = c.id
-        JOIN users s ON b.staff_id = s.id
+        LEFT JOIN users s ON b.staff_id = s.id
         LEFT JOIN stores st ON b.store_id = st.id
         WHERE b.id = %s
     """, (bill_id,))

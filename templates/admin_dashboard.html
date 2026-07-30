@@ -657,7 +657,7 @@
                             <th>Email Address</th>
                             <th>Phone Number</th>
                             <th style="text-align: center; width: 120px;">Status</th>
-                            <th style="text-align: center; width: 140px;">Action</th>
+                            <th style="text-align: center; width: 220px;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -674,18 +674,27 @@
                                     {% endif %}
                                 </td>
                                 <td style="text-align: center;">
-                                    <form method="POST" action="{{ url_for('toggle_staff', staff_id=staff.id) }}" style="margin: 0;">
-                                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                                        {% if staff.is_active %}
-                                            <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; color: var(--danger); border-color: rgba(220, 38, 38, 0.2); background: rgba(220, 38, 38, 0.05);">
-                                                <i class="fa-solid fa-user-slash"></i> Deactivate
+                                    <div style="display: inline-flex; gap: 0.4rem; align-items: center; justify-content: center;">
+                                        <form method="POST" action="{{ url_for('toggle_staff', staff_id=staff.id) }}" style="margin: 0;">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            {% if staff.is_active %}
+                                                <button type="submit" class="btn btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; color: var(--danger); border-color: rgba(220, 38, 38, 0.2); background: rgba(220, 38, 38, 0.05);">
+                                                    <i class="fa-solid fa-user-slash"></i> Deactivate
+                                                </button>
+                                            {% else %}
+                                                <button type="submit" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background-color: var(--success); border-color: var(--success);">
+                                                    <i class="fa-solid fa-user-check"></i> Activate
+                                                </button>
+                                            {% endif %}
+                                        </form>
+
+                                        <form method="POST" action="{{ url_for('delete_staff', staff_id=staff.id) }}" style="margin: 0;" onsubmit="return confirm('Are you sure you want to permanently delete this staff account? This action cannot be undone.');">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit" class="btn btn-danger" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background-color: var(--danger); border-color: var(--danger); color: #ffffff;">
+                                                <i class="fa-solid fa-trash-can"></i> Delete
                                             </button>
-                                        {% else %}
-                                            <button type="submit" class="btn btn-primary" style="padding: 0.35rem 0.75rem; font-size: 0.8rem; background-color: var(--success); border-color: var(--success);">
-                                                <i class="fa-solid fa-user-check"></i> Activate
-                                            </button>
-                                        {% endif %}
-                                    </form>
+                                        </form>
+                                    </div>
                                 </td>
                             </tr>
                         {% endfor %}
